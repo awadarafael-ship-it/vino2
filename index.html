@@ -1279,50 +1279,52 @@ function runSplitAnimation(onDone){
   const page = document.getElementById('page-cartas');
   const icons = document.getElementById('cartas-icons');
 
-  // cria dois canvas temporários que saem voando
   const cvLeft = document.createElement('canvas');
   const cvRight = document.createElement('canvas');
   cvLeft.width = cvRight.width = 96;
   cvLeft.height = cvRight.height = 96;
-  cvLeft.style.cssText = 'position:absolute;image-rendering:pixelated;image-rendering:crisp-edges;width:109px;height:109px;';
+  cvLeft.style.cssText  = 'position:absolute;image-rendering:pixelated;image-rendering:crisp-edges;width:109px;height:109px;';
   cvRight.style.cssText = cvLeft.style.cssText;
 
   drawFolder(cvLeft, false);
   drawFolder(cvRight, false);
-
-  // posiciona ambos no centro
-  const setCenter = (cv) => {
-    cv.style.left = '50%';
-    cv.style.top = '50%';
-    cv.style.transform = 'translate(-50%, -50%)';
-  };
-  setCenter(cvLeft);
-  setCenter(cvRight);
   page.appendChild(cvLeft);
   page.appendChild(cvRight);
 
-  const dur = 600; // ms da animação de split
-  const gap = 90;  // px de separação final (em tela real)
+  const dur = 600;
+  const gap = 90;
   let start = null;
+
+  function placeCenter(cv, offsetX, scale){
+    const cx = page.offsetWidth  / 2;
+    const cy = page.offsetHeight / 2;
+    const w  = 109;
+    cv.style.left          = (cx + offsetX - w/2) + 'px';
+    cv.style.top           = (cy - w/2) + 'px';
+    cv.style.transform     = `scale(${scale})`;
+    cv.style.transformOrigin = (w/2)+'px '+(w/2)+'px';
+  }
+
+  // posiciona no centro antes do primeiro frame
+  placeCenter(cvLeft,  0, 0.85);
+  placeCenter(cvRight, 0, 0.85);
 
   function frame(ts){
     if(!start) start = ts;
     const t = Math.min((ts - start) / dur, 1);
-    // ease out cubic
     const e = 1 - Math.pow(1 - t, 3);
 
-    const offX = e * gap;
-    cvLeft.style.transform  = `translate(calc(-50% - ${offX}px), -50%) scale(${0.85 + e*0.15})`;
-    cvRight.style.transform = `translate(calc(-50% + ${offX}px), -50%) scale(${0.85 + e*0.15})`;
+    const offX  = e * gap;
+    const scale = 0.85 + e * 0.15;
+    placeCenter(cvLeft,  -offX, scale);
+    placeCenter(cvRight,  offX, scale);
 
-    // opacidade: ambas ficam mais transparentes no meio do split e voltam
     const fadeV = t < 0.5 ? 1 - t * 0.6 : 0.7 + (t - 0.5) * 0.6;
     cvLeft.style.opacity = cvRight.style.opacity = fadeV;
 
     if(t < 1){
       requestAnimationFrame(frame);
     } else {
-      // remove temporários, mostra ícones reais
       cvLeft.remove();
       cvRight.remove();
       icons.style.opacity = '1';
