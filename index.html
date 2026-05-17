@@ -292,8 +292,34 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
   max-width:min(340px,85vw);
 }
 #player-title{
-  font-family:monospace;font-size:22px;letter-spacing:0.18em;
+  font-family:monospace;font-size:26px;letter-spacing:0.18em;
   color:#8a7888;text-transform:lowercase;
+  cursor:pointer;
+  transition:color 0.2s;
+  animation:title-pulse 3.2s ease-in-out infinite;
+}
+#player-title:hover{
+  color:#c0a888;
+  animation-play-state:paused;
+}
+/* respiração sutil de opacity — indica "vivo/clicável" */
+@keyframes title-pulse{
+  0%,100%{opacity:0.78;}
+  50%{opacity:1;}
+}
+/* os 3 pontos do (...) aparecem em sequência: . → .. → ... */
+#player-title .dot{
+  opacity:0;
+  animation:dot-cycle 2.4s ease-in-out infinite;
+}
+#player-title .dot:nth-child(1){animation-delay:0s;}
+#player-title .dot:nth-child(2){animation-delay:0.25s;}
+#player-title .dot:nth-child(3){animation-delay:0.5s;}
+@keyframes dot-cycle{
+  0%   {opacity:0;}
+  20%  {opacity:1;}
+  70%  {opacity:1;}
+  100% {opacity:0;}
 }
 #player-subtitle{
   font-family:monospace;font-size:13px;letter-spacing:0.18em;
@@ -345,6 +371,64 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
 }
 #friends-close:hover{color:#8a7888;}
 
+/* ── TRACKLIST MODAL (espelha friends-overlay) ── */
+#tracklist-overlay{
+  position:absolute;inset:0;
+  background:rgba(8,6,8,0.85);
+  display:flex;align-items:center;justify-content:center;
+  z-index:20;
+}
+#tracklist-overlay.hidden{display:none;}
+#tracklist-box{
+  position:relative;
+  background:#100e10;
+  border:1px solid #2a3040;
+  padding:32px 28px 24px;
+  max-width:min(440px,90vw);
+  text-align:center;
+}
+#tracklist-title{
+  display:block;
+  font-family:monospace;font-size:13px;letter-spacing:0.22em;
+  color:#8a7888;text-transform:lowercase;
+  margin-bottom:20px;
+}
+#tracklist-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:repeat(10, auto);
+  grid-auto-flow:column;
+  gap:6px 28px;
+  margin-bottom:20px;
+  text-align:left;
+}
+.track-row{
+  font-family:monospace;font-size:10px;letter-spacing:0.12em;
+  color:#504858;text-transform:lowercase;
+  line-height:1.6;
+  padding:2px 0;
+}
+.track-row.clickable{
+  color:#8a7888;cursor:pointer;
+  transition:color 0.2s;
+}
+.track-row.clickable:hover{color:#c0a888;}
+.track-row.playing{color:#c07040;}
+#tracklist-back{
+  background:transparent;border:none;cursor:pointer;
+  font-family:monospace;font-size:11px;letter-spacing:0.18em;
+  color:#2a3848;text-transform:lowercase;
+  transition:color 0.2s;
+  padding:4px 0;
+}
+#tracklist-back:hover{color:#8a7888;}
+@media (max-width:480px){
+  #tracklist-grid{
+    gap:4px 16px;
+  }
+  .track-row{font-size:9px;letter-spacing:0.1em;}
+}
+
 /* ── CARTAS PAGE ── */
 #page-cartas{overflow:hidden;}
 
@@ -392,6 +476,113 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
   width:100%;height:100%;
   border:none;
   display:block;
+}
+
+/* ── CARTA (modal estilo friends-box, fonte maior pra leitura) ── */
+.carta-box{
+  position:relative;
+  background:#100e10;
+  border:1px solid #2a3040;
+  padding:32px 28px 28px;
+  width:min(480px,90vw);
+  text-align:left;
+}
+.carta-titulo{
+  font-family:monospace;
+  font-size:20px;
+  font-weight:700;
+  letter-spacing:0.18em;
+  color:#8a7888;
+  text-transform:lowercase;
+  margin:0 0 22px;
+  line-height:1.3;
+}
+.carta-corpo{
+  font-family:monospace;
+  font-size:14px;
+  font-weight:500;
+  letter-spacing:0.06em;
+  color:#a09098;
+  line-height:1.7;
+}
+.carta-corpo p{
+  margin:0 0 14px;
+}
+.carta-corpo p:last-child{ margin-bottom:0; }
+@media (max-width:480px){
+  .carta-box{ padding:24px 20px 22px; }
+  .carta-titulo{ font-size:17px; margin-bottom:18px; }
+  .carta-corpo{ font-size:13px; line-height:1.65; }
+}
+
+/* ── FOTO GRID (thumbnails na pasta de fotos) ── */
+.foto-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:8px;
+  width:100%;
+}
+.foto-thumb{
+  width:100%;
+  aspect-ratio:1/1;
+  overflow:hidden;
+  cursor:pointer;
+  border:1px solid #2a3040;
+  background:#100e10;
+  transition:transform 0.15s, border-color 0.2s;
+}
+.foto-thumb img{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+}
+.foto-thumb:hover{
+  transform:scale(1.02);
+  border-color:#504858;
+}
+@media (max-width:480px){
+  .foto-grid{ grid-template-columns:repeat(2, 1fr); gap:6px; }
+}
+
+/* ── LIGHTBOX DE FOTO ── */
+#foto-lightbox{
+  position:fixed;inset:0;
+  background:rgba(8,6,8,0.94);
+  z-index:9990;
+  display:flex;align-items:center;justify-content:center;
+  padding:40px;
+}
+#foto-lightbox.hidden{display:none;}
+#foto-lightbox-img{
+  max-width:100%;max-height:100%;
+  object-fit:contain;
+  display:block;
+}
+#foto-lightbox-close{
+  position:absolute;top:24px;right:28px;
+  background:transparent;border:none;cursor:pointer;
+  font-family:monospace;font-size:24px;
+  color:#8a7888;transition:color 0.2s;
+}
+#foto-lightbox-close:hover{color:#c0a888;}
+.foto-lightbox-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  background:transparent;border:none;cursor:pointer;
+  font-family:monospace;font-size:48px;
+  color:#504858;
+  transition:color 0.2s;
+  padding:8px 16px;
+}
+.foto-lightbox-nav:hover{color:#c0a888;}
+#foto-lightbox-prev{left:12px;}
+#foto-lightbox-next{right:12px;}
+
+/* ── EMPTY STATE (em breve...) ── */
+.content-empty, .subfolders-empty{
+  font-family:monospace;font-size:13px;letter-spacing:0.22em;
+  color:#504858;text-transform:lowercase;
+  padding:48px 12px;
+  text-align:center;
 }
 
 /* navegação de cartas */
@@ -466,7 +657,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
     <span class="icon-label" data-i18n="home.folder">cartas(...)</span>
   </div>
   <div class="icon-item" id="item-box">
-    <canvas id="cv-box" width="96" height="96" style="width:109px;height:109px;"></canvas>
+    <canvas id="cv-box" width="96" height="96" style="width:87px;height:87px;"></canvas>
     <span class="icon-label" data-i18n="home.box">escutar(...)</span>
   </div>
 </div>
@@ -570,6 +761,9 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
   <button class="pg-back" id="player-close" data-i18n="nav.back">← voltar</button>
 
   <div id="player-inner">
+    <!-- título do álbum, clicável, abre modal de tracklist -->
+    <span id="player-title">Vino(<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>)</span>
+
     <!-- estátua clicável = botão play/pause -->
     <div id="player-sprite-wrap">
       <canvas id="cv-player-sprite" width="96" height="96"></canvas>
@@ -578,7 +772,6 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
 
     <!-- texto do álbum -->
     <div id="player-text">
-      <span id="player-title">Vino(...)</span>
       <span id="player-subtitle" data-i18n="player.subtitle">o primeiro album de estúdio de Raf Awada</span>
       <span id="player-credits" data-i18n-html="player.credits">feito com carinho por Rafael Awada, e seus <span id="player-friends">queridos amigos</span></span>
     </div>
@@ -604,12 +797,29 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
     <span id="player-time">0:00</span>
   </div>
 
+  <!-- lightbox de foto -->
+  <div id="foto-lightbox" class="hidden">
+    <button id="foto-lightbox-close">×</button>
+    <button id="foto-lightbox-prev" class="foto-lightbox-nav">‹</button>
+    <img id="foto-lightbox-img" alt="">
+    <button id="foto-lightbox-next" class="foto-lightbox-nav">›</button>
+  </div>
+
   <!-- popup queridos amigos -->
   <div id="friends-overlay" class="hidden">
     <div id="friends-box">
       <span id="friends-title" data-i18n="player.friendsTitle">queridos amigos</span>
       <p id="friends-list">Arthur Verocai, Andres Orellana, Bibi, Carol Mak, Velvettica, Juyè, Oda Loves You, Seint Monet, Sikan, Triiip, Gelin Hau, Vladmir Kusijanović, Karan Pandav, Jon Clifton, Josh Britt, Marci Swarovski, Lucas Santos, Parker Grace Murphy, Johayna El-Mouallem, Rafael Fadul and Taylor Wilzbach</p>
       <button id="friends-close">×</button>
+    </div>
+  </div>
+
+  <!-- popup tracklist -->
+  <div id="tracklist-overlay" class="hidden">
+    <div id="tracklist-box">
+      <span id="tracklist-title">Vino(...)</span>
+      <div id="tracklist-grid"></div>
+      <button id="tracklist-back" data-i18n="nav.back">← voltar</button>
     </div>
   </div>
 
@@ -647,6 +857,8 @@ const I18N = {
     'nav.back':          '← voltar',
     'content.prev':      '(carta anterior)',
     'content.next':      '(próxima carta)',
+    'content.empty':     'em breve(...)',
+    'subfolders.empty':  'em breve(...)',
     'player.subtitle':   'o primeiro album de estúdio de Raf Awada',
     'player.credits':    'feito com carinho por Rafael Awada, e seus <span id="player-friends">queridos amigos</span>',
     'player.friendsTitle': 'queridos amigos',
@@ -663,6 +875,8 @@ const I18N = {
     'nav.back':          '← back',
     'content.prev':      '(previous letter)',
     'content.next':      '(next letter)',
+    'content.empty':     'soon(...)',
+    'subfolders.empty':  'soon(...)',
     'player.subtitle':   'the first studio album by Raf Awada',
     'player.credits':    'made with love by Rafael Awada, and his <span id="player-friends">dear friends</span>',
     'player.friendsTitle': 'dear friends',
@@ -705,6 +919,54 @@ function applyI18N(){
   if(typeof hintsShown !== 'undefined' && hintsShown > 0){
     refreshHintsPanel();
   }
+  // atualiza tracklist (faixas com nome podem ter strings de UI no futuro)
+  if(typeof TRACKS !== 'undefined' && document.getElementById('tracklist-grid')){
+    buildTracklist();
+  }
+  // se está na página de subfolders/content, re-renderiza pra puxar nomes/textos no novo idioma
+  if(typeof pageSubfolders !== 'undefined' &&
+     pageSubfolders && !pageSubfolders.classList.contains('hidden') &&
+     typeof currentMode !== 'undefined' && currentMode){
+    // re-monta grid de subpastas no idioma atual sem mudar de tela
+    rebuildSubfoldersGrid();
+  }
+  if(typeof pageContent !== 'undefined' &&
+     pageContent && !pageContent.classList.contains('hidden')){
+    renderContent();
+  }
+}
+
+// re-monta o grid sem transição de página (usado pela troca de idioma)
+function rebuildSubfoldersGrid(){
+  const grid = document.getElementById('subfolders-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  const pastas = DADOS[currentMode] || [];
+  if(pastas.length === 0){
+    const msg = document.createElement('div');
+    msg.className = 'subfolders-empty';
+    msg.textContent = t('subfolders.empty');
+    grid.appendChild(msg);
+    return;
+  }
+  pastas.forEach((pasta, idx) => {
+    const item = document.createElement('div');
+    item.className = 'icon-item';
+    item.style.cursor = 'pointer';
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 96;
+    cv.style.cssText = 'width:109px;height:109px;image-rendering:pixelated;image-rendering:crisp-edges;display:block;transition:transform 0.15s;';
+    drawFolder(cv, false);
+    const label = document.createElement('span');
+    label.className = 'icon-label';
+    label.textContent = currentLang === 'en' ? pasta.nome_en : pasta.nome_pt;
+    item.appendChild(cv);
+    item.appendChild(label);
+    item.addEventListener('mouseenter', ()=>{ cv.style.transform='scale(1.07)'; label.style.color='#8a7888'; drawFolder(cv, true); });
+    item.addEventListener('mouseleave', ()=>{ cv.style.transform=''; label.style.color=''; drawFolder(cv, false); });
+    item.addEventListener('click', ()=> goToContent(currentMode, idx, 0));
+    grid.appendChild(item);
+  });
 }
 
 // re-vincula click no #player-friends (recriado quando innerHTML do credits é trocado)
@@ -936,57 +1198,139 @@ function drawFolder(c,hovered){
    ÍCONE 3 — BOOMBOX
 ════════════════════════════════════════════════════════ */
 function drawBoombox(c,hovered){
+  // mantém o nome (animação de split usa essa assinatura), mas desenha CD.
   const ctx=c.getContext('2d'),W=c.width,s=W/96;
   ctx.clearRect(0,0,W,W);
-  function p(x,y,col,w=1,h=1){if(w<=0||h<=0)return;ctx.fillStyle=col;ctx.fillRect(Math.round(x*s),Math.round(y*s),Math.round(w*s),Math.round(h*s));}
-  const C={
-    BG:'#080608',OL:dk('#1a0e18'),
-    b0:dk('#b0a898'),b1:dk('#807870'),b2:dk('#504840'),b3:dk('#302820'),
-    l0:dk('#c07040'),l1:dk('#904828'),l2:dk('#603018'),
-    r0:dk('#c8c0b8'),r1:dk('#888078'),r2:dk('#484038'),rh:dk('#d8d0c8'),
-    w0:'#181410',w1:dk('#302820'),tp:dk('#604838'),sc:dk('#686058'),
-    n1:'#d0c8b8',n2:'#4880e8',n3:dk('#c07040'),nl:'#1a1410',
-    an:dk('#c8c0b8'),an2:dk('#888078')
+  function p(x,y,col,w=1,h=1){
+    if(w<=0||h<=0)return;
+    ctx.fillStyle=col;
+    ctx.fillRect(Math.round(x*s),Math.round(y*s),Math.round(w*s),Math.round(h*s));
+  }
+  const BG = '#080608';
+  const OL = '#0a0a0e'; // contorno preto (a referência tem borda bem escura)
+  // paleta dos setores iridescentes
+  const PAL = {
+    white:    '#f0f0f4',
+    silver0:  '#d8d8e0',
+    silver1:  '#b0b0bc',
+    silver2:  '#888898',
+    lavender: '#b8a8d0',
+    lilac:    '#9888c0',
+    cyan:     '#9cd0d0',
+    teal:     '#6cb0b0',
+    yellow:   '#e8d878',
+    lime:     '#a8d870',
+    green:    '#78c898',
+    pink:     '#e0a8b8',
   };
-  ctx.fillStyle=C.BG;ctx.fillRect(0,0,W,W);
-  [[13,22],[13,20],[14,18],[14,16],[15,14],[16,12],[16,10],[17,8],[18,6],[19,4],[20,3]].forEach(([x,y])=>{p(x,y,C.an2,2,2);p(x,y,C.an,1,2);});
-  p(11,22,C.b1,6,4);p(11,22,C.b0,4,2);p(11,22,C.OL,1,4);p(16,22,C.OL,1,4);p(11,22,C.OL,6,1);p(11,25,C.OL,6,1);
-  p(19,2,C.an,4,4);p(19,2,C.b0,2,2);p(19,2,C.OL,1,4);p(22,2,C.OL,1,4);p(19,2,C.OL,4,1);p(19,5,C.OL,4,1);
-  const bx=6,by=26,bw=84,bh=54;
-  p(bx+2,by+2,C.b3,bw,bh);p(bx,by,C.b1,bw,bh);p(bx,by,C.b0,bw,4);p(bx,by+bh-6,C.b2,bw,6);
-  p(bx,by,C.b0,3,bh);p(bx+bw-4,by,C.b2,4,bh);
-  p(bx,by,C.OL,bw,1);p(bx,by+bh,C.OL,bw,1);p(bx,by,C.OL,1,bh);p(bx+bw,by,C.OL,1,bh);
-  p(bx,by,C.OL,2,2);p(bx+bw-1,by,C.OL,2,2);p(bx,by+bh-1,C.OL,2,2);p(bx+bw-1,by+bh-1,C.OL,2,2);
-  const lx=14,ly=30,lw=68,lh=24;
-  p(lx,ly,C.l1,lw,lh);p(lx,ly,C.l0,lw,5);p(lx,ly+lh-5,C.l2,lw,5);
-  p(lx,ly,C.OL,1,lh);p(lx+lw,ly,C.OL,1,lh);p(lx,ly,C.OL,lw,1);p(lx,ly+lh,C.OL,lw,1);
-  p(lx+6,ly+7,C.l2,14,1);p(lx+6,ly+9,C.l2,10,1);p(lx+6,ly+11,C.l2,12,1);
-  p(lx+22,ly+7,C.l2,4,5);p(lx+28,ly+7,C.l2,4,5);p(lx+34,ly+7,C.l2,4,5);p(lx+40,ly+7,C.l2,4,5);
-  p(lx+6,ly+16,C.n2,10,2);
-  const rv=9,lc=40,rc=56,wyc=65;
-  const wxw=lc-rv-2,www=(rc+rv+2)-wxw,wyw=wyc-rv-3,whw=rv*2+6;
-  p(wxw,wyw,C.w1,www,whw);p(wxw+1,wyw+1,C.w0,www-2,whw-2);
-  p(wxw,wyw,C.OL,www,1);p(wxw,wyw+whw,C.OL,www,1);p(wxw,wyw,C.OL,1,whw);p(wxw+www,wyw,C.OL,1,whw);
-  function reel(cx,cy,r){
-    for(let dy=-r+1;dy<=r-1;dy++){const hw=Math.round(Math.sqrt(r*r-dy*dy))-1;if(hw>0)p(cx-hw,cy+dy,C.r1,hw*2,1);}
-    for(let dy=-r+2;dy<=-1;dy++){const hw=Math.round(Math.sqrt(r*r-dy*dy))-2;if(hw>0)p(cx-hw,cy+dy,C.r0,1,1);}
-    for(let dy=1;dy<=r-2;dy++){const hw=Math.round(Math.sqrt(r*r-dy*dy))-2;if(hw>0)p(cx+hw-1,cy+dy,C.r2,1,1);}
-    const hs=Math.round(r*0.35);
-    p(cx-hs,cy-hs,C.r2,hs*2+1,hs*2+1);p(cx-hs+1,cy-hs+1,C.rh,hs*2-1,hs*2-1);p(cx,cy,C.r2,1,1);
-    p(cx-hs,cy,C.r2,hs*2+1,1);p(cx,cy-hs,C.r2,1,hs*2+1);
-    for(let dy=-r;dy<=r;dy++){const hw=Math.round(Math.sqrt(r*r-dy*dy));if(hw>0){p(cx-hw,cy+dy,C.OL,1,1);p(cx+hw-1,cy+dy,C.OL,1,1);}}
+  const HUB_W = '#e8e8ec';  // ring branco do hub
+  const HUB_K = '#101018';  // furo central
+
+  ctx.fillStyle=BG;ctx.fillRect(0,0,W,W);
+
+  const cx = 48, cy = 48, r = 42, rInner = 11, rHole = 4;
+
+  // mapeamento ângulo→cor (cunhas estilo CD).
+  // ang em [0, 1) — 0 = direita, 0.25 = baixo, 0.5 = esquerda, 0.75 = cima
+  // os índices de cunha foram desenhados pra bater visualmente com a referência:
+  // brilho branco na parte superior-direita, lilás à esquerda, ciano/verde/amarelo
+  // distribuídos no resto, com áreas prata maiores.
+  function colorAt(angle, dist){
+    // dist normalizado 0..1 (proximidade do hub→borda)
+    const a = (angle + 1) % 1;
+    // cunhas (em volta do círculo, sentido horário a partir de "3h")
+    // wedge boundaries em frações de turno (0..1):
+    //   0.00–0.10  prata claro
+    //   0.10–0.20  branco (highlight grande, superior-direita)
+    //   0.20–0.30  prata claro
+    //   0.30–0.40  amarelo/lima
+    //   0.40–0.50  verde/ciano
+    //   0.50–0.60  prata médio
+    //   0.60–0.72  lilás/lavanda (esquerda)
+    //   0.72–0.82  branco menor (highlight inferior-esquerdo)
+    //   0.82–0.92  ciano
+    //   0.92–1.00  prata claro
+    let base;
+    if      (a < 0.10) base = PAL.silver0;
+    else if (a < 0.20) base = PAL.white;
+    else if (a < 0.30) base = PAL.silver0;
+    else if (a < 0.36) base = PAL.yellow;
+    else if (a < 0.42) base = PAL.lime;
+    else if (a < 0.50) base = PAL.cyan;
+    else if (a < 0.58) base = PAL.silver1;
+    else if (a < 0.66) base = PAL.lavender;
+    else if (a < 0.74) base = PAL.lilac;
+    else if (a < 0.82) base = PAL.white;
+    else if (a < 0.90) base = PAL.teal;
+    else if (a < 0.96) base = PAL.silver1;
+    else               base = PAL.silver0;
+
+    // escurece levemente perto da borda externa (gradiente radial sutil)
+    if(dist > 0.88){
+      return darken(base, 0.78);
+    }
+    return base;
   }
-  reel(lc,wyc,rv);reel(rc,wyc,rv);
-  p(lc,wyc+rv,C.tp,rc-lc,2);p(lc,wyc+rv,C.OL,rc-lc,1);
-  function screw(x,y){p(x,y,C.b2,4,4);p(x,y,C.OL,1,4);p(x+3,y,C.OL,1,4);p(x,y,C.OL,4,1);p(x,y+3,C.OL,4,1);p(x+1,y+1,C.sc,2,2);p(x+1,y+1,C.b0,1,1);}
-  screw(8,28);screw(84,28);screw(8,74);screw(84,74);
-  if(hovered){
-    function note(x,y,col){p(x,y,col,4,3);p(x,y,C.nl,1,3);p(x+4,y,C.nl,1,3);p(x,y,C.nl,4,1);p(x,y+3,C.nl,4,1);p(x+3,y-9,col,2,10);p(x+3,y-9,C.nl,1,10);p(x+4,y-9,C.nl,1,10);p(x+3,y-10,C.nl,2,1);}
-    function flag(x,y,col){p(x+4,y-9,col,6,2);p(x+4,y-9,C.nl,6,1);p(x+7,y-7,col,4,2);p(x+7,y-6,C.nl,4,1);}
-    note(32,22,C.n1);
-    note(52,16,C.n2);flag(52,16,C.n2);
-    note(70,22,C.n3);
+  function darken(hex, f){
+    const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return '#'+Math.round(r*f).toString(16).padStart(2,'0')
+              +Math.round(g*f).toString(16).padStart(2,'0')
+              +Math.round(b*f).toString(16).padStart(2,'0');
   }
+
+  // pinta o disco pixel a pixel, em blocos 1px (no canvas 96x96, scaled)
+  for(let yy=cy-r; yy<=cy+r; yy++){
+    for(let xx=cx-r; xx<=cx+r; xx++){
+      const dx = xx - cx;
+      const dy = yy - cy;
+      const d = Math.hypot(dx, dy);
+      if(d > r) continue;
+      if(d < rHole) continue; // furo central
+      // anel preto do hub
+      if(d < rInner && d >= rInner - 1.2){
+        p(xx, yy, HUB_K, 1, 1);
+        continue;
+      }
+      // área dentro do hub: branco
+      if(d < rInner){
+        p(xx, yy, HUB_W, 1, 1);
+        continue;
+      }
+      // anel preto fino logo após o hub (cria o "anel" da referência)
+      if(d >= rInner && d < rInner + 1.2){
+        p(xx, yy, HUB_K, 1, 1);
+        continue;
+      }
+      // ângulo em [0,1)
+      let ang = Math.atan2(dy, dx) / (2*Math.PI);
+      if(ang < 0) ang += 1;
+      const dist = d / r;
+      p(xx, yy, colorAt(ang, dist), 1, 1);
+    }
+  }
+
+  // contorno externo preto grosso (2 passes pra ficar nítido)
+  for(let dy=-r-1; dy<=r+1; dy++){
+    const hw = Math.round(Math.sqrt(Math.max(0,(r+1)*(r+1) - dy*dy)));
+    if(hw>0){
+      p(cx-hw, cy+dy, OL, 1, 1);
+      p(cx+hw-1, cy+dy, OL, 1, 1);
+    }
+    const hw2 = Math.round(Math.sqrt(Math.max(0,r*r - dy*dy)));
+    if(hw2>0){
+      p(cx-hw2, cy+dy, OL, 1, 1);
+      p(cx+hw2-1, cy+dy, OL, 1, 1);
+    }
+  }
+
+  // furo central preto bem definido
+  for(let dy=-rHole; dy<=rHole; dy++){
+    const hw = Math.round(Math.sqrt(Math.max(0,rHole*rHole - dy*dy)));
+    if(hw>0) p(cx-hw, cy+dy, HUB_K, hw*2, 1);
+  }
+
+  // hover: o scale 1.07 do CSS (.icon-item:hover canvas) já dá feedback;
+  // não desenha notinhas pra não cortar nos cantos do canvas
 }
 
 /* ════════════════════════════════════════════════════════
@@ -1005,120 +1349,268 @@ function drawSpotify(c){
   const ctx=c.getContext('2d'),W=c.width,s=W/96;
   ctx.clearRect(0,0,W,W);
   function p(x,y,col,w=1,h=1){if(w<=0||h<=0)return;ctx.fillStyle=col;ctx.fillRect(Math.round(x*s),Math.round(y*s),Math.round(w*s),Math.round(h*s));}
-  const BG='#080608', GR='#1ed760', DK=dk('#1ed760'), OL=dk('#1a0e18');
+  const BG='#080608', GR='#1DB954', WH='#ffffff', OL='#0a0a0e';
   ctx.fillStyle=BG;ctx.fillRect(0,0,W,W);
-  // círculo exterior pixel-art
-  const cx=48,cy=48,r=38;
+
+  const cx=48, cy=48, r=42;
+
+  // disco verde preenchido
   for(let dy=-r;dy<=r;dy++){
     const hw=Math.round(Math.sqrt(r*r-dy*dy));
-    if(hw>0){
-      p(cx-hw,cy+dy,GR,hw*2,1);
-    }
+    if(hw>0) p(cx-hw,cy+dy,GR,hw*2,1);
   }
-  // borda escura
+  // contorno preto
   for(let dy=-r;dy<=r;dy++){
     const hw=Math.round(Math.sqrt(r*r-dy*dy));
     if(hw>0){p(cx-hw,cy+dy,OL,1,1);p(cx+hw-1,cy+dy,OL,1,1);}
   }
-  // 3 ondas brancas (arcos pixel-art simplificados)
-  // onda superior — larga
-  const wave=(oy,thickness,xStart,xEnd)=>{
-    for(let x=xStart;x<xEnd;x++){
-      const rel=(x-xStart)/(xEnd-xStart);
-      const waveY=Math.round(oy + Math.sin(rel*Math.PI)*6);
-      p(x,waveY,BG,1,thickness);
-    }
-  };
-  // onda 1 — topo (maior)
-  for(let x=22;x<=74;x++){
-    const rel=(x-22)/52;
-    const wy=Math.round(34+Math.sin(rel*Math.PI)*(-5));
-    p(x,wy,BG,1,5);
+
+  // 3 ondas brancas — desenho stair-step pixel art clássico.
+  // Cada arco é um caminho de blocos retangulares que sobem-andam-descem.
+  // Coordenadas: [xStart, yStart, blocos] onde blocos é uma sequência de
+  // [largura, alturaY (negativa pra cima)] descrevendo os degraus relativos.
+
+  // arco superior — maior, mais aberto
+  // base: y=44, sobe degraus até y=28 no meio, desce de volta
+  function drawStairArc(blocks, thickness){
+    // blocks: array de {x, y, w} — cada bloco horizontal
+    blocks.forEach(b=> p(b.x, b.y, WH, b.w, thickness));
   }
-  // onda 2 — meio
-  for(let x=26;x<=70;x++){
-    const rel=(x-26)/44;
-    const wy=Math.round(46+Math.sin(rel*Math.PI)*(-4));
-    p(x,wy,BG,1,4);
-  }
-  // onda 3 — base (menor)
-  for(let x=30;x<=66;x++){
-    const rel=(x-30)/36;
-    const wy=Math.round(57+Math.sin(rel*Math.PI)*(-3));
-    p(x,wy,BG,1,3);
-  }
+
+  // arco superior (curva ampla)
+  drawStairArc([
+    {x: 24, y: 44, w: 6},  // borda esq, sobe
+    {x: 27, y: 40, w: 6},
+    {x: 31, y: 36, w: 8},
+    {x: 36, y: 33, w: 10},
+    {x: 43, y: 32, w: 10},  // topo
+    {x: 51, y: 33, w: 10},
+    {x: 56, y: 36, w: 8},
+    {x: 62, y: 40, w: 6},
+    {x: 66, y: 44, w: 6},
+  ], 4);
+
+  // arco do meio
+  drawStairArc([
+    {x: 30, y: 52, w: 6},
+    {x: 33, y: 49, w: 6},
+    {x: 37, y: 47, w: 10},
+    {x: 45, y: 46, w: 8},
+    {x: 50, y: 47, w: 10},
+    {x: 57, y: 49, w: 6},
+    {x: 60, y: 52, w: 6},
+  ], 3);
+
+  // arco inferior (menor)
+  drawStairArc([
+    {x: 35, y: 60, w: 5},
+    {x: 38, y: 58, w: 6},
+    {x: 42, y: 57, w: 12},
+    {x: 52, y: 58, w: 6},
+    {x: 55, y: 60, w: 5},
+  ], 3);
 }
 
 function drawYoutube(c){
   const ctx=c.getContext('2d'),W=c.width,s=W/96;
   ctx.clearRect(0,0,W,W);
   function p(x,y,col,w=1,h=1){if(w<=0||h<=0)return;ctx.fillStyle=col;ctx.fillRect(Math.round(x*s),Math.round(y*s),Math.round(w*s),Math.round(h*s));}
-  const BG='#080608',RD='#ff0000',WH='#d0c8b8',OL=dk('#1a0e18');
+  const BG='#080608', RD='#FF0000', WH='#ffffff', OL='#0a0a0e';
   ctx.fillStyle=BG;ctx.fillRect(0,0,W,W);
-  // retângulo arredondado vermelho
-  p(8,28,RD,80,40);p(6,32,RD,84,32);p(8,68,OL,80,2);p(8,28,OL,80,2);p(6,30,OL,2,36);p(88,30,OL,2,36);
-  // borda escura arredondada (cantos)
-  p(8,28,OL,4,4);p(84,28,OL,4,4);p(8,64,OL,4,4);p(84,64,OL,4,4);
-  p(10,26,RD,76,4);p(10,66,RD,76,4);p(6,30,RD,4,36);p(86,30,RD,4,36);
-  p(10,26,OL,76,2);p(10,68,OL,76,2);p(6,30,OL,2,36);p(88,30,OL,2,36);
-  // triângulo play branco
-  for(let i=0;i<14;i++) p(40+i,48-i,WH,1,i*2);
-  // sombra do triângulo
-  for(let i=0;i<14;i++) p(40+i,48-i,OL,1,1);
+
+  // retângulo arredondado vermelho (rounded rect "pixel-art-ado")
+  // bounding box: x 6..90, y 22..74 (largura 84, altura 52)
+  const x=6, y=22, w=84, h=52;
+  // corpo principal (interior)
+  p(x+3, y,   RD, w-6, h);           // faixa central horizontal
+  p(x,   y+3, RD, w,   h-6);         // faixa central vertical
+  // cantos arredondados (preenchimento dos 4 cantos)
+  // canto top-left
+  p(x+1, y+1, RD, 2, 2);
+  p(x,   y+3, RD, 1, 1); p(x+3, y, RD, 1, 1);
+  // canto top-right
+  p(x+w-3, y+1, RD, 2, 2);
+  p(x+w-1, y+3, RD, 1, 1); p(x+w-4, y, RD, 1, 1);
+  // canto bottom-left
+  p(x+1, y+h-3, RD, 2, 2);
+  p(x, y+h-4, RD, 1, 1); p(x+3, y+h-1, RD, 1, 1);
+  // canto bottom-right
+  p(x+w-3, y+h-3, RD, 2, 2);
+  p(x+w-1, y+h-4, RD, 1, 1); p(x+w-4, y+h-1, RD, 1, 1);
+
+  // contorno preto
+  p(x+3, y-1, OL, w-6, 1);           // topo
+  p(x+3, y+h, OL, w-6, 1);           // baixo
+  p(x-1, y+3, OL, 1, h-6);           // esquerda
+  p(x+w, y+3, OL, 1, h-6);           // direita
+  // cantos (degrau pixel art)
+  p(x,   y,   OL, 1, 1); p(x+1, y-1, OL, 2, 1); p(x-1, y+1, OL, 1, 2);
+  p(x+w-1, y, OL, 1, 1); p(x+w-3, y-1, OL, 2, 1); p(x+w, y+1, OL, 1, 2);
+  p(x,   y+h-1, OL, 1, 1); p(x+1, y+h, OL, 2, 1); p(x-1, y+h-3, OL, 1, 2);
+  p(x+w-1, y+h-1, OL, 1, 1); p(x+w-3, y+h, OL, 2, 1); p(x+w, y+h-3, OL, 1, 2);
+
+  // triângulo play branco apontando PRA DIREITA
+  // base à esquerda (x=tx, altura th), ponta à direita (x=tx+tw)
+  const tx=38, ty=36, th=24, tw=22;
+  // pra cada linha vertical i (0 = top, th-1 = bottom), calcula até onde vai
+  // 1 = topo encolhido, no meio (th/2) é largura cheia, depois encolhe de novo
+  for(let i=0; i<th; i++){
+    const distFromCenter = Math.abs(i - (th-1)/2);
+    const rowW = Math.round(tw - (distFromCenter / ((th-1)/2)) * tw);
+    if(rowW > 0){
+      p(tx, ty+i, WH, rowW, 1);
+    }
+  }
+  // contorno preto: borda direita (hipotenusas)
+  for(let i=0; i<th; i++){
+    const distFromCenter = Math.abs(i - (th-1)/2);
+    const rowW = Math.round(tw - (distFromCenter / ((th-1)/2)) * tw);
+    if(rowW > 0){
+      p(tx + rowW - 1, ty+i, OL, 1, 1); // borda diagonal (lado direito de cada linha)
+    }
+  }
+  // borda esquerda vertical (a base do triângulo)
+  p(tx-1, ty, OL, 1, th);
 }
 
 function drawAppleMusic(c){
   const ctx=c.getContext('2d'),W=c.width,s=W/96;
   ctx.clearRect(0,0,W,W);
   function p(x,y,col,w=1,h=1){if(w<=0||h<=0)return;ctx.fillStyle=col;ctx.fillRect(Math.round(x*s),Math.round(y*s),Math.round(w*s),Math.round(h*s));}
-  const BG='#080608',R1='#fc3c44',R2='#f92b36',WH='#d0c8b8',OL=dk('#1a0e18');
+  const BG='#080608';
+  // gradiente Apple Music: rosa por cima → vermelho por baixo
+  const P1='#FA57C1'; // rosa topo
+  const P2='#F84574'; // rosa-vermelho meio
+  const P3='#FA243C'; // vermelho base
+  const WH='#ffffff';
+  const OL='#0a0a0e';
   ctx.fillStyle=BG;ctx.fillRect(0,0,W,W);
-  // fundo gradiente simulado (dois retângulos)
-  p(12,12,R1,72,72);p(12,12,R2,72,36);
-  // bordas arredondadas pixel
-  p(12,12,OL,72,2);p(12,82,OL,72,2);p(12,12,OL,2,72);p(82,12,OL,2,72);
-  p(12,12,OL,6,6);p(78,12,OL,6,6);p(12,78,OL,6,6);p(78,78,OL,6,6);
-  p(14,12,R1,68,4);p(14,80,R1,68,4);p(12,14,R1,4,68);p(80,14,R1,4,68);
-  p(12,12,OL,2,2);p(82,12,OL,2,2);p(12,82,OL,2,2);p(82,82,OL,2,2);
-  // nota musical pixel-art
-  // haste vertical
-  p(52,30,WH,4,26);p(52,30,OL,1,26);p(55,30,OL,1,26);
-  // bandeira
-  p(56,30,WH,12,4);p(56,34,WH,10,3);p(56,37,WH,6,3);
-  p(56,30,OL,12,1);p(67,30,OL,1,10);p(56,40,OL,8,1);
-  // cabeça da nota
-  p(38,54,WH,14,10);p(36,56,WH,18,6);
-  p(36,54,OL,18,2);p(36,62,OL,18,2);p(36,54,OL,2,10);p(52,54,OL,2,10);
-  p(38,55,OL,14,1);
+
+  // bounding box do quadrado arredondado: 8..88 (80x80)
+  const x=8, y=8, w=80, h=80;
+
+  // preenchimento gradiente em 3 faixas
+  p(x+3, y,        P1, w-6, 28);
+  p(x,   y+3,      P1, 3,   25);
+  p(x+w-3, y+3,    P1, 3,   25);
+  p(x+3, y+28,     P2, w-6, 24);
+  p(x,   y+28,     P2, 3,   24);
+  p(x+w-3, y+28,   P2, 3,   24);
+  p(x+3, y+52,     P3, w-6, h-52);
+  p(x,   y+55,     P3, 3,   h-58);
+  p(x+w-3, y+55,   P3, 3,   h-58);
+
+  // cantos arredondados (preenchimento dos 4 cantos)
+  p(x+1, y+1, P1, 2, 2);
+  p(x+w-3, y+1, P1, 2, 2);
+  p(x+1, y+h-3, P3, 2, 2);
+  p(x+w-3, y+h-3, P3, 2, 2);
+
+  // contorno preto (arredondado)
+  p(x+3, y-1, OL, w-6, 1);
+  p(x+3, y+h, OL, w-6, 1);
+  p(x-1, y+3, OL, 1, h-6);
+  p(x+w, y+3, OL, 1, h-6);
+  // degraus dos cantos
+  p(x,   y,   OL, 1, 1); p(x+1, y-1, OL, 2, 1); p(x-1, y+1, OL, 1, 2);
+  p(x+w-1, y, OL, 1, 1); p(x+w-3, y-1, OL, 2, 1); p(x+w, y+1, OL, 1, 2);
+  p(x,   y+h-1, OL, 1, 1); p(x+1, y+h, OL, 2, 1); p(x-1, y+h-3, OL, 1, 2);
+  p(x+w-1, y+h-1, OL, 1, 1); p(x+w-3, y+h, OL, 2, 1); p(x+w, y+h-3, OL, 1, 2);
+
+  // nota musical dupla branca (duas cabeças conectadas por barra horizontal no topo)
+  // cabeça esquerda — pixel art oval
+  p(28, 60, WH, 14, 12);
+  p(30, 58, WH, 10, 16);
+  // cabeça direita
+  p(54, 56, WH, 14, 12);
+  p(56, 54, WH, 10, 16);
+  // hastes verticais (finas)
+  p(40, 28, WH, 3, 34);  // haste esquerda
+  p(66, 24, WH, 3, 34);  // haste direita
+  // barra horizontal conectando topos (com leve inclinação)
+  p(40, 24, WH, 29, 5);
+  p(40, 29, WH, 29, 2);
 }
 
 function drawSoundcloud(c){
   const ctx=c.getContext('2d'),W=c.width,s=W/96;
   ctx.clearRect(0,0,W,W);
   function p(x,y,col,w=1,h=1){if(w<=0||h<=0)return;ctx.fillStyle=col;ctx.fillRect(Math.round(x*s),Math.round(y*s),Math.round(w*s),Math.round(h*s));}
-  const BG='#080608',OR='#ff5500',OR2=dk('#ff5500',0.8),WH='#d0c8b8',OL=dk('#1a0e18');
+  const BG='#080608';
+  const OR='#FF5500';     // laranja oficial
+  const OR2='#FF7733';     // laranja claro
+  const OR3='#CC4400';     // laranja escuro
+  const OL='#0a0a0e';
   ctx.fillStyle=BG;ctx.fillRect(0,0,W,W);
-  // nuvem pixel-art laranja
-  // corpo principal
-  p(18,54,OR,60,22);
-  // bolhas da nuvem
-  // bolha esquerda pequena
-  p(14,50,OR,14,26);p(12,52,OR,18,22);
-  // bolha centro-esq
-  p(24,42,OR,18,12);p(22,44,OR,22,10);
-  // bolha centro
-  p(40,36,OR,20,18);p(38,38,OR,24,16);
-  // bolha direita
-  p(58,44,OR,16,10);p(56,46,OR,20,8);
-  // topo arredondado direito
-  p(70,50,OR,10,26);p(68,48,OR,14,28);
-  // bordas OL
-  p(12,52,OL,2,2);p(12,72,OL,2,2);p(76,50,OL,2,2);
-  p(12,74,OL,66,2);p(78,50,OL,2,26);
-  p(14,50,OL,14,2);p(24,42,OL,18,2);p(40,36,OL,20,2);p(58,44,OL,16,2);
-  p(22,44,OL,2,6);p(38,38,OL,2,16);p(56,46,OL,2,4);p(12,54,OL,2,18);
-  // gradiente simulado — parte inferior mais escura
-  p(18,66,OR2,60,8);
+
+  // círculos da nuvem
+  function fillCircle(cx, cy, r, col){
+    for(let dy=-r; dy<=r; dy++){
+      const hw = Math.round(Math.sqrt(r*r - dy*dy));
+      if(hw>0) p(cx-hw, cy+dy, col, hw*2, 1);
+    }
+  }
+  function strokeCircle(cx, cy, r){
+    for(let dy=-r; dy<=r; dy++){
+      const hw = Math.round(Math.sqrt(r*r - dy*dy));
+      if(hw>0){
+        p(cx-hw, cy+dy, OL, 1, 1);
+        p(cx+hw-1, cy+dy, OL, 1, 1);
+      }
+    }
+  }
+
+  // 4 montículos da nuvem (centros + raios)
+  const bubbles = [
+    [28, 60, 10],
+    [42, 54, 14],  // bolha mais alta (meio-esq)
+    [60, 50, 18],  // bolha mais alta e maior (meio-dir) — formato clássico
+    [76, 56, 12],
+  ];
+
+  // base reta — retângulo que une todos os montículos
+  const baseY = 70, baseH = 6;
+  p(18, baseY, OR, 64, baseH);
+
+  // preenche os montículos
+  bubbles.forEach(b=> fillCircle(b[0], b[1], b[2], OR));
+
+  // highlight superior — só na metade de cima de cada bolha
+  bubbles.forEach(b=>{
+    const [cx, cy, r] = b;
+    for(let dy=-r; dy<=-Math.round(r*0.35); dy++){
+      const hw = Math.round(Math.sqrt(r*r - dy*dy)) - 1;
+      if(hw>0) p(cx-hw+1, cy+dy, OR2, hw*2-2, 1);
+    }
+  });
+
+  // sombra inferior da base
+  p(18, baseY+baseH-2, OR3, 64, 2);
+
+  // contorno preto manual — só base e topo dos montículos visíveis externamente
+  // (sem contornar cada bolha individualmente, que cria linhas pretas confusas
+  // dentro da nuvem onde os círculos se sobrepõem)
+  p(18, baseY+baseH, OL, 64, 1);   // borda inferior da base
+  p(17, baseY+1, OL, 1, baseH-1);  // canto inf-esq
+  p(82, baseY+1, OL, 1, baseH-1);  // canto inf-dir
+  // contorno superior: desenha pixel preto onde o topo de cada bolha "fica
+  // de fora" das outras bolhas
+  bubbles.forEach((b, idx)=>{
+    const [cx, cy, r] = b;
+    for(let dy=-r; dy<0; dy++){
+      const hw = Math.round(Math.sqrt(r*r - dy*dy));
+      if(hw <= 0) continue;
+      const px1 = cx-hw, px2 = cx+hw-1, py = cy+dy;
+      // só pinta de preto se esse pixel não estiver coberto por outra bolha
+      const covered = (px, py) => bubbles.some((bb, jdx)=>{
+        if(jdx === idx) return false;
+        const d = Math.hypot(px - bb[0], py - bb[1]);
+        return d <= bb[2];
+      });
+      if(!covered(px1, py)) p(px1, py, OL, 1, 1);
+      if(!covered(px2, py)) p(px2, py, OL, 1, 1);
+    }
+  });
 }
 
 /* ════════════════════════════════════════════════════════
@@ -1131,14 +1623,14 @@ function runExplosionAnimation(onDone){
   // rádio central — começa abaixo da tela
   const cvBoom = document.createElement('canvas');
   cvBoom.width = cvBoom.height = 96;
-  cvBoom.style.cssText = 'position:absolute;width:109px;height:109px;image-rendering:pixelated;image-rendering:crisp-edges;z-index:2;opacity:0;';
+  cvBoom.style.cssText = 'position:absolute;width:87px;height:87px;image-rendering:pixelated;image-rendering:crisp-edges;z-index:2;opacity:0;';
   drawBoombox(cvBoom, false);
   page.appendChild(cvBoom);
 
   // canvas de rachadura sobreposto ao rádio
   const cvCrack = document.createElement('canvas');
   cvCrack.width = cvCrack.height = 96;
-  cvCrack.style.cssText = 'position:absolute;width:109px;height:109px;image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none;z-index:3;opacity:0;';
+  cvCrack.style.cssText = 'position:absolute;width:87px;height:87px;image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none;z-index:3;opacity:0;';
   page.appendChild(cvCrack);
 
   // desenha rachadura pixel-art no cvCrack
@@ -1635,59 +2127,76 @@ function hideHints(){
 
 /* ════════════════════════════════════════════════════════
    ██ DADOS — edite só aqui para adicionar conteúdo ██
-   
-   CARTAS (.doc): cada pasta tem um array de cartas.
-   Cada carta: { titulo, pdfUrl }
-   pdfUrl = link público do Google Drive no formato:
-     https://drive.google.com/file/d/ID_DO_ARQUIVO/view?usp=sharing
-   
-   VÍDEOS (.mov): cada pasta tem um array de vídeos.
-   Cada vídeo: { titulo, vimeoId }
-   vimeoId = número do ID do Vimeo (ex: '123456789')
+
+   Cada pasta tem `nome_pt`, `nome_en` e `itens`. Cada item tem `tipo`.
+
+   Tipo 'carta':
+     { tipo:'carta', titulo_pt, titulo_en, corpo_pt, corpo_en }
+     corpo aceita \n entre parágrafos.
+
+   Tipo 'foto':
+     { tipo:'foto', arquivo }
+     arquivo = nome do JPG/PNG na mesma pasta do index.html
+
+   Tipo 'video' (não usado por enquanto, ficou pra .mov):
+     { tipo:'video', titulo_pt, titulo_en, vimeoId }
+
+   Pra adicionar carta nova: copia o último item de uma pasta, ajusta o texto.
+   Pra adicionar pasta nova: copia o objeto inteiro dentro de `doc:[ ... ]`.
 ════════════════════════════════════════════════════════ */
 const DADOS = {
   doc: [
     {
-      pasta: 'cartas pra b.',
+      nome_pt: 'até quando?',
+      nome_en: 'until when?',
       itens: [
-        { titulo: 'carta 001 — jan 2025', pdfUrl: 'https://drive.google.com/file/d/COLOQUE_ID_AQUI/view?usp=sharing' },
-        { titulo: 'carta 002 — fev 2025', pdfUrl: 'https://drive.google.com/file/d/COLOQUE_ID_AQUI/view?usp=sharing' },
-      ]
+        {
+          tipo: 'carta',
+          titulo_pt: 'Até quando?',
+          titulo_en: 'Until when?',
+          corpo_pt:
+            "A chave abre e fecha, não importa.\n" +
+            "Na porta de madeira e musgo da cave vive a possibilidade.\n" +
+            "Paciência? Sim. Esmero? Indispensável… até quando?\n" +
+            "Segredo, mistério, sim tudo bem… até quando?\n" +
+            "O alquimista é mestre do ouro porque ama o chumbo.\n" +
+            "O viciado ama o chumbo mas nem sempre vira mestre.\n" +
+            "Então? Embriagar, destruir, reconstruir pra embriagar… até quando?\n" +
+            "Banho-se, o insondável leito oceânico da alma… até quando?\n" +
+            "Madeira e musgo e caveira, alquimistas e santos e malabaristas.\n" +
+            "Trabalhadores, viciados, traficantes.\n" +
+            "\n" +
+            "Tudo bem, mas escuta:\n" +
+            "\n" +
+            "Até quando??",
+          corpo_en:
+            "The key opens and closes, no matter. On the wooden, mossy door of the cellar lives possibility.\n" +
+            "Patience? Yes. Diligence? Indispensable… until when?\n" +
+            "Secret, mystery, sure, fine… until when?\n" +
+            "The alchemist is master of gold because he loves lead. The addict loves lead but doesn't always become a master.\n" +
+            "So? Intoxicate, destroy, rebuild to intoxicate again… until when?\n" +
+            "Bathe yourself, the unfathomable oceanic bed of the soul… until when?\n" +
+            "Wood and moss and skull, alchemists and saints and jugglers. Workers, addicts, dealers.\n" +
+            "It's all fine, but listen:\n" +
+            "\n" +
+            "Until when??",
+        },
+      ],
     },
     {
-      pasta: '2024',
+      nome_pt: '(...)',
+      nome_en: '(...)',
       itens: [
-        { titulo: 'carta 001 — mar 2024', pdfUrl: 'https://drive.google.com/file/d/COLOQUE_ID_AQUI/view?usp=sharing' },
-      ]
-    },
-    {
-      pasta: 'para guardar',
-      itens: [
-        { titulo: 'carta sem data', pdfUrl: 'https://drive.google.com/file/d/COLOQUE_ID_AQUI/view?usp=sharing' },
-      ]
+        { tipo:'foto', arquivo:'foto-001.jpg' },
+        { tipo:'foto', arquivo:'foto-002.jpg' },
+        { tipo:'foto', arquivo:'foto-003.jpg' },
+        { tipo:'foto', arquivo:'foto-004.jpg' },
+        { tipo:'foto', arquivo:'foto-005.jpg' },
+        { tipo:'foto', arquivo:'foto-006.jpg' },
+      ],
     },
   ],
-  mov: [
-    {
-      pasta: 'filmes curtos',
-      itens: [
-        { titulo: 'filme 001 — verão 2024', vimeoId: '000000001' },
-        { titulo: 'filme 002 — outono 2024', vimeoId: '000000002' },
-      ]
-    },
-    {
-      pasta: '2025',
-      itens: [
-        { titulo: 'registro jan 2025', vimeoId: '000000003' },
-      ]
-    },
-    {
-      pasta: 'sem pressa',
-      itens: [
-        { titulo: 'vídeo avulso', vimeoId: '000000004' },
-      ]
-    },
-  ]
+  mov: [], // vazio por enquanto — mostra "em breve(...)"
 };
 
 /* ════════════════════════════════════════════════════════
@@ -1831,6 +2340,24 @@ function goToSubfolders(mode){
   grid.innerHTML = '';
 
   const pastas = DADOS[mode];
+
+  // se modo .mov não tem pastas → mostra "em breve(...)"
+  if(!pastas || pastas.length === 0){
+    const msg = document.createElement('div');
+    msg.className = 'subfolders-empty';
+    msg.textContent = t('subfolders.empty');
+    grid.appendChild(msg);
+
+    glitchTransition(
+      ()=>{
+        pageCartas.classList.add('hidden');
+        pageSubfolders.classList.remove('hidden');
+      },
+      ()=>{}
+    );
+    return;
+  }
+
   pastas.forEach((pasta, idx) => {
     const item = document.createElement('div');
     item.className = 'icon-item';
@@ -1843,7 +2370,7 @@ function goToSubfolders(mode){
 
     const label = document.createElement('span');
     label.className = 'icon-label';
-    label.textContent = pasta.pasta;
+    label.textContent = currentLang === 'en' ? pasta.nome_en : pasta.nome_pt;
 
     item.appendChild(cv);
     item.appendChild(label);
@@ -1882,41 +2409,89 @@ function goToContent(mode, folderIdx, itemIdx){
 
 function renderContent(){
   const pasta = DADOS[currentMode][currentFolderIdx];
-  const item  = pasta.itens[currentItemIdx];
-  const total = pasta.itens.length;
+  const items = pasta.itens || [];
+  const total = items.length;
 
-  document.getElementById('content-title').textContent = pasta.pasta + ' / ' + item.titulo;
+  const titleEl = document.getElementById('content-title');
+  const media   = document.getElementById('content-media');
+  const nav     = document.getElementById('carta-nav');
 
-  const media = document.getElementById('content-media');
   media.innerHTML = '';
 
-  if(currentMode === 'doc'){
-    // converte link do Drive pro Google Docs Viewer
-    const viewerUrl = 'https://docs.google.com/viewer?url=' +
-      encodeURIComponent(item.pdfUrl.replace('/view?usp=sharing','').replace('/view','') + '/preview') +
-      '&embedded=true';
-    const wrap = document.createElement('div');
-    wrap.className = 'pdf-viewer';
-    const iframe = document.createElement('iframe');
-    // usa o link de preview direto do Drive que é mais confiável
-    const driveId = item.pdfUrl.match(/\/d\/([^/]+)/)?.[1] || '';
-    iframe.src = driveId
-      ? `https://drive.google.com/file/d/${driveId}/preview`
-      : viewerUrl;
-    iframe.allow = 'autoplay';
-    wrap.appendChild(iframe);
-    media.appendChild(wrap);
+  // pasta vazia
+  if(total === 0){
+    titleEl.textContent = (currentLang === 'en' ? pasta.nome_en : pasta.nome_pt);
+    const empty = document.createElement('div');
+    empty.className = 'content-empty';
+    empty.textContent = t('content.empty');
+    media.appendChild(empty);
+    nav.style.display = 'none';
+    return;
+  }
 
-    // nav de cartas
-    const nav = document.getElementById('carta-nav');
-    nav.style.display = total > 1 ? 'flex' : 'none';
-    document.getElementById('carta-counter').textContent =
-      `(${currentItemIdx + 1}/${total})`;
-    document.getElementById('nav-prev').disabled = currentItemIdx === 0;
-    document.getElementById('nav-next').disabled = currentItemIdx === total - 1;
+  const item = items[currentItemIdx];
 
-  } else {
-    // vídeo vimeo
+  // ── PASTA DE FOTOS (grid de thumbnails) ──
+  if(item.tipo === 'foto'){
+    titleEl.textContent = (currentLang === 'en' ? pasta.nome_en : pasta.nome_pt);
+    const grid = document.createElement('div');
+    grid.className = 'foto-grid';
+    items.forEach((it, idx)=>{
+      if(it.tipo !== 'foto') return;
+      const thumb = document.createElement('div');
+      thumb.className = 'foto-thumb';
+      const img = document.createElement('img');
+      img.src = it.arquivo;
+      img.alt = '';
+      img.loading = 'lazy';
+      thumb.appendChild(img);
+      thumb.addEventListener('click', ()=> openFotoLightbox(idx));
+      grid.appendChild(thumb);
+    });
+    media.appendChild(grid);
+    nav.style.display = 'none';   // sem prev/next no grid (lightbox tem seu próprio)
+    return;
+  }
+
+  // ── CARTA (modal estilo friends-box, fonte maior) ──
+  if(item.tipo === 'carta'){
+    titleEl.textContent = (currentLang === 'en' ? pasta.nome_en : pasta.nome_pt);
+
+    const box = document.createElement('div');
+    box.className = 'carta-box';
+
+    const heading = document.createElement('h2');
+    heading.className = 'carta-titulo';
+    heading.textContent = currentLang === 'en' ? item.titulo_en : item.titulo_pt;
+    box.appendChild(heading);
+
+    const corpo = document.createElement('div');
+    corpo.className = 'carta-corpo';
+    const texto = (currentLang === 'en' ? item.corpo_en : item.corpo_pt) || '';
+    // converte \n duplo em parágrafo, \n simples em quebra de linha
+    texto.split(/\n\n+/).forEach(par=>{
+      const pEl = document.createElement('p');
+      pEl.innerHTML = par.split('\n').map(esc).join('<br>');
+      corpo.appendChild(pEl);
+    });
+    box.appendChild(corpo);
+
+    media.appendChild(box);
+
+    // nav: mostra prev/next que pulam entre itens E entre pastas (modo doc)
+    const flat = flattenItemsWithPasta(currentMode);
+    const flatIdx = flat.findIndex(f => f.folderIdx === currentFolderIdx && f.itemIdx === currentItemIdx);
+    nav.style.display = flat.length > 1 ? 'flex' : 'none';
+    document.getElementById('carta-counter').textContent = `(${flatIdx + 1}/${flat.length})`;
+    document.getElementById('nav-prev').disabled = flatIdx <= 0;
+    document.getElementById('nav-next').disabled = flatIdx >= flat.length - 1;
+    return;
+  }
+
+  // ── VÍDEO vimeo (fallback, caso volte a usar) ──
+  if(item.tipo === 'video'){
+    titleEl.textContent = (currentLang === 'en' ? pasta.nome_en : pasta.nome_pt) + ' / ' +
+                         (currentLang === 'en' ? item.titulo_en : item.titulo_pt);
     const wrap = document.createElement('div');
     wrap.className = 'video-embed';
     const iframe = document.createElement('iframe');
@@ -1925,14 +2500,53 @@ function renderContent(){
     iframe.allowFullscreen = true;
     wrap.appendChild(iframe);
     media.appendChild(wrap);
-
-    const nav = document.getElementById('carta-nav');
     nav.style.display = total > 1 ? 'flex' : 'none';
-    document.getElementById('carta-counter').textContent =
-      `(${currentItemIdx + 1}/${total})`;
+    document.getElementById('carta-counter').textContent = `(${currentItemIdx + 1}/${total})`;
     document.getElementById('nav-prev').disabled = currentItemIdx === 0;
     document.getElementById('nav-next').disabled = currentItemIdx === total - 1;
   }
+}
+
+// escape básico pra HTML em corpo de carta
+function esc(s){
+  return String(s).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+}
+
+/* lista plana de todos os itens de todas as pastas de um modo, na ordem
+   da definição em DADOS. usada pra navegar prev/next entre pastas. */
+function flattenItemsWithPasta(mode){
+  const out = [];
+  (DADOS[mode] || []).forEach((pasta, fi)=>{
+    (pasta.itens || []).forEach((it, ii)=>{
+      out.push({ folderIdx: fi, itemIdx: ii, tipo: it.tipo });
+    });
+  });
+  return out;
+}
+
+/* ── LIGHTBOX DE FOTO ──
+   abre overlay com foto maior. setas e tecla esc fecham. */
+let lightboxIdx = 0;
+function openFotoLightbox(idx){
+  lightboxIdx = idx;
+  const ov = document.getElementById('foto-lightbox');
+  const img = document.getElementById('foto-lightbox-img');
+  const pasta = DADOS[currentMode][currentFolderIdx];
+  img.src = pasta.itens[idx].arquivo;
+  ov.classList.remove('hidden');
+}
+function closeFotoLightbox(){
+  document.getElementById('foto-lightbox').classList.add('hidden');
+}
+function navFoto(dir){
+  const pasta = DADOS[currentMode][currentFolderIdx];
+  const fotos = pasta.itens.filter(i => i.tipo === 'foto');
+  if(fotos.length === 0) return;
+  // mapeia o índice no array original
+  const realIdxs = pasta.itens.map((it,i)=>it.tipo==='foto'?i:-1).filter(i=>i>=0);
+  const curPos = realIdxs.indexOf(lightboxIdx);
+  const newPos = (curPos + dir + realIdxs.length) % realIdxs.length;
+  openFotoLightbox(realIdxs[newPos]);
 }
 
 /* ════════════════════════════════════════════════════════
@@ -1949,6 +2563,99 @@ const progressThumb = document.getElementById('progress-thumb');
 const playerTime    = document.getElementById('player-time');
 let   tearLoop      = null;
 let   isPlaying     = false;
+
+/* ── TRACKLIST ──
+   20 faixas. Só as com nome têm arquivo e ficam clicáveis no modal.
+   Pra adicionar nova: preenche `name` e `file` (caminho do mp3).
+   `null` em ambos = faixa ainda como (...) */
+const TRACKS = [
+  { name: null,                file: null },                  // 1
+  { name: null,                file: null },                  // 2
+  { name: null,                file: null },                  // 3
+  { name: 'Sede Violenta',     file: 'sede-violenta.mp3' },   // 4
+  { name: null,                file: null },                  // 5
+  { name: null,                file: null },                  // 6
+  { name: null,                file: null },                  // 7
+  { name: null,                file: null },                  // 8
+  { name: null,                file: null },                  // 9
+  { name: 'Otário',            file: 'otario.mp3' },          // 10
+  { name: null,                file: null },                  // 11
+  { name: null,                file: null },                  // 12 — sonic feat juyè (escondido até ter master)
+  { name: null,                file: null },                  // 13
+  { name: null,                file: null },                  // 14
+  { name: null,                file: null },                  // 15
+  { name: null,                file: null },                  // 16
+  { name: null,                file: null },                  // 17
+  { name: null,                file: null },                  // 18
+  { name: null,                file: null },                  // 19
+  { name: null,                file: null },                  // 20
+];
+
+// índice da faixa atualmente carregada (-1 = nenhuma ainda)
+let currentTrackIdx = -1;
+
+/* carrega uma faixa. Por padrão dá play (autoplay=true).
+   Marca como playing no modal. */
+function loadTrack(idx, autoplay = true){
+  const tr = TRACKS[idx];
+  if(!tr || !tr.file) return;
+
+  currentTrackIdx = idx;
+  audio.src = tr.file;
+  // reset progress visual
+  progressFill.style.width = '0%';
+  progressThumb.style.left = '0%';
+  playerTime.textContent = '0:00';
+
+  // atualiza marcação no modal (se aberto)
+  refreshTracklistPlayingState();
+
+  if(autoplay){
+    audio.play().then(()=>{
+      isPlaying = true;
+      setPlayUI(true);
+      startTears();
+    }).catch(()=>{
+      // browsers podem bloquear autoplay sem interação — ignora silenciosamente
+      isPlaying = false;
+      setPlayUI(false);
+    });
+  }
+}
+
+/* índice da primeira track disponível (com file). Retorna -1 se nenhuma. */
+function firstAvailableTrackIdx(){
+  for(let i=0;i<TRACKS.length;i++) if(TRACKS[i].file) return i;
+  return -1;
+}
+
+/* re-marca .playing no item correto do tracklist */
+function refreshTracklistPlayingState(){
+  document.querySelectorAll('.track-row').forEach(el=>{
+    const idx = parseInt(el.getAttribute('data-track-idx'), 10);
+    el.classList.toggle('playing', idx === currentTrackIdx);
+  });
+}
+
+/* monta o conteúdo do modal — chamado uma vez no init */
+function buildTracklist(){
+  const grid = document.getElementById('tracklist-grid');
+  grid.innerHTML = '';
+  TRACKS.forEach((tr, i)=>{
+    const row = document.createElement('div');
+    row.className = 'track-row';
+    row.setAttribute('data-track-idx', i);
+    const num = String(i+1).padStart(2,'0');
+    if(tr.name && tr.file){
+      row.classList.add('clickable');
+      row.textContent = `${num} - ${tr.name}(...)`;
+      row.addEventListener('click', ()=> loadTrack(i));
+    } else {
+      row.textContent = `${num} - (...)`;
+    }
+    grid.appendChild(row);
+  });
+}
 
 function drawPlayerSprite(){
   drawSprite(cvPlayerSp);
@@ -2020,6 +2727,13 @@ function stopTears(){
 }
 
 function togglePlay(){
+  // se nenhuma track carregada ainda, carrega a primeira disponível e toca
+  if(currentTrackIdx < 0){
+    const idx = firstAvailableTrackIdx();
+    if(idx < 0) return; // nenhuma faixa disponível
+    loadTrack(idx, true);
+    return;
+  }
   if(isPlaying){
     audio.pause();
     isPlaying = false;
@@ -2058,6 +2772,22 @@ document.getElementById('friends-close').addEventListener('click', ()=>{
 document.getElementById('friends-overlay').addEventListener('click', (e)=>{
   if(e.target === document.getElementById('friends-overlay'))
     document.getElementById('friends-overlay').classList.add('hidden');
+});
+
+// modal tracklist: abrir clicando no título "Vino(...)"
+document.getElementById('player-title').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  document.getElementById('tracklist-overlay').classList.remove('hidden');
+  refreshTracklistPlayingState();
+});
+// botão voltar do modal — fecha
+document.getElementById('tracklist-back').addEventListener('click', ()=>{
+  document.getElementById('tracklist-overlay').classList.add('hidden');
+});
+// clique fora da caixa (no overlay escuro) também fecha
+document.getElementById('tracklist-overlay').addEventListener('click', (e)=>{
+  if(e.target === document.getElementById('tracklist-overlay'))
+    document.getElementById('tracklist-overlay').classList.add('hidden');
 });
 
 function goToPlayer(){
@@ -2110,6 +2840,7 @@ document.getElementById('player-close').addEventListener('click', ()=>{
   audio.pause();
   audio.currentTime = 0;
   isPlaying = false;
+  currentTrackIdx = -1;
   setPlayUI(false);
   stopTears();
   glitchTransition(
@@ -2539,13 +3270,41 @@ document.getElementById('content-back').addEventListener('click', ()=>{
   );
 });
 
-// navegação de cartas / vídeos
+// lightbox de foto: fechar, navegar, tecla esc
+document.getElementById('foto-lightbox-close').addEventListener('click', closeFotoLightbox);
+document.getElementById('foto-lightbox-prev').addEventListener('click', ()=> navFoto(-1));
+document.getElementById('foto-lightbox-next').addEventListener('click', ()=> navFoto(+1));
+document.getElementById('foto-lightbox').addEventListener('click', (e)=>{
+  if(e.target.id === 'foto-lightbox') closeFotoLightbox(); // clicar no fundo fecha
+});
+document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('foto-lightbox').classList.contains('hidden')) return;
+  if(e.key === 'Escape')      closeFotoLightbox();
+  if(e.key === 'ArrowLeft')   navFoto(-1);
+  if(e.key === 'ArrowRight')  navFoto(+1);
+});
+
+// navegação de cartas: prev/next atravessa fronteiras de pasta usando a
+// lista plana (todos os itens de todas as pastas do modo atual, na ordem)
 document.getElementById('nav-prev').addEventListener('click', ()=>{
-  if(currentItemIdx > 0){ currentItemIdx--; renderContent(); }
+  const flat = flattenItemsWithPasta(currentMode);
+  const cur = flat.findIndex(f => f.folderIdx === currentFolderIdx && f.itemIdx === currentItemIdx);
+  if(cur > 0){
+    const prev = flat[cur - 1];
+    currentFolderIdx = prev.folderIdx;
+    currentItemIdx = prev.itemIdx;
+    renderContent();
+  }
 });
 document.getElementById('nav-next').addEventListener('click', ()=>{
-  const total = DADOS[currentMode][currentFolderIdx].itens.length;
-  if(currentItemIdx < total - 1){ currentItemIdx++; renderContent(); }
+  const flat = flattenItemsWithPasta(currentMode);
+  const cur = flat.findIndex(f => f.folderIdx === currentFolderIdx && f.itemIdx === currentItemIdx);
+  if(cur < flat.length - 1 && cur >= 0){
+    const nxt = flat[cur + 1];
+    currentFolderIdx = nxt.folderIdx;
+    currentItemIdx = nxt.itemIdx;
+    renderContent();
+  }
 });
 
 // clique no boombox — vai pra escutar
@@ -2595,6 +3354,9 @@ document.querySelectorAll('.lang-opt').forEach(btn=>{
   btn.addEventListener('click', ()=> setLang(btn.getAttribute('data-lang')));
 });
 applyI18N();
+
+// monta o conteúdo do modal de tracklist (uma vez só)
+buildTracklist();
 
 </script>
 </body>
