@@ -110,6 +110,13 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
   line-height:1.6;
 }
 @media (max-width:720px){
+  /* iOS dá zoom automático em qualquer input com font-size < 16px.
+     forçar 16px no mobile evita esse zoom indesejado ao focar o input */
+  #pw-input{
+    font-size:16px;
+    letter-spacing:0.22em;
+  }
+
   /* mobile: painel abaixo da estátua, dicas empilham pra baixo */
   #hints-panel{
     left:50%;
@@ -2576,9 +2583,12 @@ drawYoutube(document.getElementById('cv-youtube'));
 drawAppleMusic(document.getElementById('cv-apple'));
 drawSoundcloud(document.getElementById('cv-soundcloud'));
 
-// página de senha é a primeira tela — desenha o bg-sprite e foca no input
+// página de senha é a primeira tela — desenha o bg-sprite
 drawSprite(bgSprite);
-document.getElementById('pw-input').focus();
+// foca o input só em desktop (no mobile evita abrir teclado + zoom automático)
+if(!('ontouchstart' in window) && window.matchMedia('(hover: hover)').matches){
+  document.getElementById('pw-input').focus();
+}
 
 // i18n: aplica idioma detectado e liga os botões PT/EN
 document.querySelectorAll('.lang-opt').forEach(btn=>{
