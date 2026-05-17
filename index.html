@@ -110,20 +110,39 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
   line-height:1.6;
 }
 @media (max-width:720px){
+  /* mobile: painel embaixo da estátua */
   #hints-panel{
-    /* em telas estreitas, joga pra cima da estátua pra não cobrir os botões */
-    left:50%;top:8%;bottom:auto;
+    left:50%;
+    top:auto;
+    bottom:8vh;
     transform:translateX(-50%);
     max-width:88vw;
     text-align:center;
     align-items:center;
-    gap:10px;
+    gap:8px;
+  }
+  .hint-line{
+    font-size:9px;
+    padding:10px 14px;
+    line-height:1.5;
+  }
+  /* quando dicas estão abertas no mobile, reduz a estátua pra abrir espaço
+     e libera scroll caso ainda assim falte espaço */
+  #page-password.hints-open{
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  #page-password.hints-open #bg-sprite,
+  #page-password.hints-open #front-sprite{
+    transform:translate(-50%,-50%) scale(2.2) !important;
+    top:30%;
+    animation:none !important;
   }
 }
 
 /* botão dicas — caixa no estilo do popup "queridos amigos", fixa no topo */
 #hints-btn{
-  position:absolute;top:32px;left:50%;
+  position:absolute;top:80px;left:50%;
   transform:translateX(-50%);
   background:#100e10;
   border:1px solid #2a3040;
@@ -1574,6 +1593,9 @@ function showNextHint(){
   drawFrontSprite(frontSprite, hintsShown);
   frontSprite.classList.add('visible');
 
+  // marca a página em modo "dicas abertas" (CSS mobile usa isso)
+  pagePassword.classList.add('hints-open');
+
   // atualiza painel
   refreshHintsPanel();
   document.getElementById('hints-panel').classList.add('visible');
@@ -1591,6 +1613,7 @@ function showNextHint(){
 function hideHints(){
   // volta estátua pro fundo, limpa painel, reseta contador
   frontSprite.classList.remove('visible');
+  pagePassword.classList.remove('hints-open');
   const ctx=frontSprite.getContext('2d');
   ctx.clearRect(0,0,frontSprite.width,frontSprite.height);
 
