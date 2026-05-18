@@ -772,7 +772,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
 
   <div class="pw-ui">
     <div class="pw-input-wrap">
-      <input id="pw-input" type="password" data-i18n-placeholder="password.placeholder" placeholder="senha" autocomplete="off" spellcheck="false">
+      <input id="pw-input" type="password" data-i18n-placeholder="password.placeholder" placeholder="senha" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
     </div>
     <button id="pw-btn">(...)</button>
   </div>
@@ -1063,14 +1063,16 @@ function rebuildSubfoldersGrid(){
     const cv = document.createElement('canvas');
     cv.width = cv.height = 96;
     cv.style.cssText = 'width:109px;height:109px;image-rendering:pixelated;image-rendering:crisp-edges;display:block;transition:transform 0.15s;';
-    drawFolder(cv, false);
+    // ícone segue o modo: dentro de .doc usa folha, dentro de .mov usa câmera
+    const drawFn = currentMode === 'mov' ? drawCamera : drawPaper;
+    drawFn(cv, false);
     const label = document.createElement('span');
     label.className = 'icon-label';
     label.textContent = currentLang === 'en' ? pasta.nome_en : pasta.nome_pt;
     item.appendChild(cv);
     item.appendChild(label);
-    item.addEventListener('mouseenter', ()=>{ cv.style.transform='scale(1.07)'; label.style.color='#8a7888'; drawFolder(cv, true); });
-    item.addEventListener('mouseleave', ()=>{ cv.style.transform=''; label.style.color=''; drawFolder(cv, false); });
+    item.addEventListener('mouseenter', ()=>{ cv.style.transform='scale(1.07)'; label.style.color='#8a7888'; drawFn(cv, true); });
+    item.addEventListener('mouseleave', ()=>{ cv.style.transform=''; label.style.color=''; drawFn(cv, false); });
     item.addEventListener('click', ()=> goToContent(currentMode, idx, 0));
     grid.appendChild(item);
   });
@@ -2304,14 +2306,25 @@ const pageEscutar = document.getElementById('page-escutar');
 let lastEscutarFrom = null; // pra saber se voltar pra home ou pra senha
 
 function goToEscutar(){
-  // detecta de onde vem (tela atual visível) e lembra pro retorno
-  const fromPassword = !pagePassword.classList.contains('hidden');
-  const fromPage = fromPassword ? pagePassword : pageHome;
-  lastEscutarFrom = fromPage;
+  // detecta a página atualmente visível (qualquer .scene sem .hidden)
+  // pra esconder corretamente e poder voltar pro lugar certo
+  const allScenes = document.querySelectorAll('.scene');
+  let currentPage = null;
+  allScenes.forEach(s=>{
+    if(!s.classList.contains('hidden') && s.id !== 'page-escutar'){
+      currentPage = s;
+    }
+  });
+  // fallback: se nada estiver visível (caso edge), assume home
+  if(!currentPage) currentPage = pageHome;
+  lastEscutarFrom = currentPage;
 
   glitchTransition(
     ()=>{
-      fromPage.classList.add('hidden');
+      // esconde TODAS as scenes (defesa extra contra estados inconsistentes)
+      allScenes.forEach(s=>{
+        if(s.id !== 'page-escutar') s.classList.add('hidden');
+      });
 
       // desenha os ícones reais (ficarão escondidos até o fim da explosão)
       drawSpotify(document.getElementById('cv-spotify'));
@@ -2694,54 +2707,99 @@ function runSplitAnimation(onDone){
   const page = document.getElementById('page-cartas');
   const icons = document.getElementById('cartas-icons');
 
-  const cvLeft = document.createElement('canvas');
-  const cvRight = document.createElement('canvas');
-  cvLeft.width = cvRight.width = 96;
-  cvLeft.height = cvRight.height = 96;
-  cvLeft.style.cssText  = 'position:absolute;image-rendering:pixelated;image-rendering:crisp-edges;width:109px;height:109px;';
-  cvRight.style.cssText = cvLeft.style.cssText;
+  // canvas único central (a pasta inicial)
+  const cvCenter = document.createElement('canvas');
+  cvCenter.width = cvCenter.height = 96;
+  cvCenter.style.cssText = 'position:absolute;image-rendering:pixelated;image-rendering:crisp-edges;width:109px;height:109px;';
+  drawFolder(cvCenter, false);
+  page.appendChild(cvCenter);
 
-  drawFolder(cvLeft, false);
-  drawFolder(cvRight, false);
-  page.appendChild(cvLeft);
-  page.appendChild(cvRight);
+  // canvas esquerdo (vira folha) e direito (vira câmera) — criados depois
+  let cvLeft = null, cvRight = null;
 
-  const dur = 600;
-  const gap = 90;
-  let start = null;
-
-  function placeCenter(cv, offsetX, scale){
+  function place(cv, offsetX, offsetY, scaleX, scaleY, rotation){
     const cx = page.offsetWidth  / 2;
     const cy = page.offsetHeight / 2;
     const w  = 109;
-    cv.style.left          = (cx + offsetX - w/2) + 'px';
-    cv.style.top           = (cy - w/2) + 'px';
-    cv.style.transform     = `scale(${scale})`;
+    cv.style.left = (cx + offsetX - w/2) + 'px';
+    cv.style.top  = (cy + offsetY - w/2) + 'px';
+    cv.style.transform = `scaleX(${scaleX}) scaleY(${scaleY}) rotate(${rotation}deg)`;
     cv.style.transformOrigin = (w/2)+'px '+(w/2)+'px';
   }
 
-  // posiciona no centro antes do primeiro frame
-  placeCenter(cvLeft,  0, 0.85);
-  placeCenter(cvRight, 0, 0.85);
+  // posição inicial: pasta no centro
+  place(cvCenter, 0, 0, 1, 1, 0);
+
+  const totalDur = 1100;
+  const splitPoint = 100; // onde a barra única vira duas barras
+  let start = null;
+  let separated = false;
 
   function frame(ts){
     if(!start) start = ts;
-    const t = Math.min((ts - start) / dur, 1);
-    const e = 1 - Math.pow(1 - t, 3);
+    const t = Math.min((ts - start) / totalDur, 1);
 
-    const offX  = e * gap;
-    const scale = 0.85 + e * 0.15;
-    placeCenter(cvLeft,  -offX, scale);
-    placeCenter(cvRight,  offX, scale);
+    if(t < 0.30){
+      // FASE A: pasta se "amassa" virando barra fininha horizontal
+      const f = t / 0.30;
+      const eased = 1 - Math.pow(1 - f, 2);
+      const scaleY = 1 - eased * 0.93;     // 1 → 0.07
+      const scaleX = 1 + eased * 0.20;     // 1 → 1.20
+      place(cvCenter, 0, 0, scaleX, scaleY, 0);
 
-    const fadeV = t < 0.5 ? 1 - t * 0.6 : 0.7 + (t - 0.5) * 0.6;
-    cvLeft.style.opacity = cvRight.style.opacity = fadeV;
+    } else if(t < 0.45){
+      // FASE B: barra fininha oscila/se contorce no centro
+      const f = (t - 0.30) / 0.15;
+      const wobble = Math.sin(f * Math.PI * 4) * 12;       // contorção vertical
+      const rot = Math.sin(f * Math.PI * 3) * 8;            // rotação leve
+      const scaleX = 1.20 + Math.sin(f * Math.PI * 2) * 0.10;
+      place(cvCenter, 0, wobble, scaleX, 0.07, rot);
+
+    } else if(t < 0.65){
+      // FASE C: barra se divide em duas que vão pros lados
+      // no início desta fase, troca o canvas único por dois
+      if(!separated){
+        separated = true;
+        cvLeft = document.createElement('canvas');
+        cvRight = document.createElement('canvas');
+        cvLeft.width = cvRight.width = 96;
+        cvLeft.height = cvRight.height = 96;
+        cvLeft.style.cssText = cvCenter.style.cssText;
+        cvRight.style.cssText = cvCenter.style.cssText;
+        // ainda desenhamos a pasta nesse momento — a transformação faz parecer barra
+        drawPaper(cvLeft, false);
+        drawCamera(cvRight, false);
+        // mas começa invisível até o "desabrochar" — durante fase C usa só transformação
+        // truque: começa visível, mas como scaleY é 0.07, vai parecer uma linha colorida
+        page.appendChild(cvLeft);
+        page.appendChild(cvRight);
+        cvCenter.remove();
+      }
+      const f = (t - 0.45) / 0.20;
+      const eased = 1 - Math.pow(1 - f, 2);
+      const offX = eased * splitPoint;
+      const scaleX = 1.20 - eased * 0.30; // contrai um pouco horizontalmente enquanto separa
+      place(cvLeft,  -offX, 0, scaleX, 0.07, 0);
+      place(cvRight,  offX, 0, scaleX, 0.07, 0);
+
+    } else {
+      // FASE D: "desabrocha" — barras viram folha (esq) e câmera (dir)
+      const f = (t - 0.65) / 0.35;
+      // easing com leve overshoot pra dar sensação de "pop"
+      const eased = f < 0.85
+        ? 1 - Math.pow(1 - (f / 0.85), 3)
+        : 1 + Math.sin((f - 0.85) / 0.15 * Math.PI) * 0.06;
+      const scaleX = 0.90 + eased * 0.10;
+      const scaleY = 0.07 + eased * 0.93;
+      place(cvLeft,  -splitPoint, 0, scaleX, scaleY, 0);
+      place(cvRight,  splitPoint, 0, scaleX, scaleY, 0);
+    }
 
     if(t < 1){
       requestAnimationFrame(frame);
     } else {
-      cvLeft.remove();
-      cvRight.remove();
+      cvLeft && cvLeft.remove();
+      cvRight && cvRight.remove();
       icons.style.opacity = '1';
       icons.style.pointerEvents = 'auto';
       onDone && onDone();
@@ -2837,7 +2895,9 @@ function goToSubfolders(mode){
     const cv = document.createElement('canvas');
     cv.width = cv.height = 96;
     cv.style.cssText = 'width:109px;height:109px;image-rendering:pixelated;image-rendering:crisp-edges;display:block;transition:transform 0.15s;';
-    drawFolder(cv, false);
+    // ícone segue o modo: dentro de .doc usa folha, dentro de .mov usa câmera
+    const drawFn = mode === 'mov' ? drawCamera : drawPaper;
+    drawFn(cv, false);
 
     const label = document.createElement('span');
     label.className = 'icon-label';
@@ -2846,8 +2906,8 @@ function goToSubfolders(mode){
     item.appendChild(cv);
     item.appendChild(label);
 
-    item.addEventListener('mouseenter', ()=>{ cv.style.transform='scale(1.07)'; label.style.color='#8a7888'; drawFolder(cv, true); });
-    item.addEventListener('mouseleave', ()=>{ cv.style.transform=''; label.style.color=''; drawFolder(cv, false); });
+    item.addEventListener('mouseenter', ()=>{ cv.style.transform='scale(1.07)'; label.style.color='#8a7888'; drawFn(cv, true); });
+    item.addEventListener('mouseleave', ()=>{ cv.style.transform=''; label.style.color=''; drawFn(cv, false); });
     item.addEventListener('click', ()=> goToContent(mode, idx, 0));
 
     grid.appendChild(item);
@@ -3675,7 +3735,7 @@ function animateTears(){
 const PASSWORD='vino'; // ← troque aqui
 
 function checkPassword(){
-  const val=document.getElementById('pw-input').value;
+  const val=document.getElementById('pw-input').value.trim().toLowerCase();
   if(val===PASSWORD){
     goToHome();
   } else {
