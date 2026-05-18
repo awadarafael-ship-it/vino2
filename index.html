@@ -2,10 +2,17 @@
 <html lang="pt">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Vino(...)</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
+
+/* bloqueia gestos de pinch-zoom no mobile (complementa o meta viewport) */
+html,body{
+  touch-action:pan-x pan-y;
+  -webkit-text-size-adjust:100%;
+  -ms-text-size-adjust:100%;
+}
 
 /* ── PÁGINAS ── */
 .scene{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#080608;transition:none;pointer-events:auto;}
@@ -16,11 +23,14 @@
   position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:0;
 }
 
-/* ── SELETOR DE IDIOMA ── */
-#lang-switcher{
+/* ── HEADER GLOBAL (fixo, sempre visível) ── */
+#global-header{
   position:fixed;
   top:24px;right:28px;
   z-index:9998;
+  display:flex;align-items:center;gap:14px;
+}
+#lang-switcher{
   display:flex;align-items:center;gap:4px;
   font-family:monospace;font-size:10px;letter-spacing:0.18em;
 }
@@ -34,6 +44,27 @@
 .lang-opt:hover{color:#8a7888;}
 .lang-opt.active{color:#8a7888;}
 .lang-sep{color:#2a3848;}
+
+/* ícones mini do header (CD + Instagram) */
+.mini-icon{
+  display:flex;align-items:center;justify-content:center;
+  width:24px;height:24px;
+  cursor:pointer;
+  text-decoration:none;
+  opacity:0.9;
+  transition:opacity 0.2s, transform 0.2s;
+}
+.mini-icon:hover{
+  opacity:1;
+  transform:scale(1.12);
+}
+.mini-icon canvas{
+  width:24px;height:24px;
+  image-rendering:pixelated;image-rendering:crisp-edges;
+}
+
+/* esconde o mini-CD quando já está na page-escutar (redundante) */
+body.in-escutar #mini-cd{display:none;}
 
 /* ── HOME ── */
 #page-home{gap:36px;padding:48px 0;}
@@ -144,12 +175,6 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
     transform:translate(-50%,-50%) scale(2.2) !important;
     top:30%;
     animation:none !important;
-  }
-  /* mobile: hints-btn some quando dicas abertas (espaço apertado);
-     usuário usa "voltar" ou clica fora pra sair */
-  #page-password.hints-open #hints-btn{
-    opacity:0;
-    pointer-events:none;
   }
 }
 
@@ -694,11 +719,19 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
 <!-- ── GLITCH OVERLAY ── -->
 <canvas id="glitch-overlay"></canvas>
 
-<!-- ── SELETOR DE IDIOMA (fixo, sempre visível) ── -->
-<div id="lang-switcher">
-  <button class="lang-opt" data-lang="pt">PT</button>
-  <span class="lang-sep">/</span>
-  <button class="lang-opt" data-lang="en">EN</button>
+<!-- ── HEADER GLOBAL (fixo, sempre visível em todas as páginas) ── -->
+<div id="global-header">
+  <a class="mini-icon" id="mini-cd" title="ouvir">
+    <canvas id="cv-mini-cd" width="96" height="96"></canvas>
+  </a>
+  <a class="mini-icon" id="mini-insta" href="https://instagram.com/rafawada" target="_blank" rel="noopener" title="instagram">
+    <canvas id="cv-mini-insta" width="96" height="96"></canvas>
+  </a>
+  <div id="lang-switcher">
+    <button class="lang-opt" data-lang="pt">PT</button>
+    <span class="lang-sep">/</span>
+    <button class="lang-opt" data-lang="en">EN</button>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -712,10 +745,6 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
   <div class="icon-item" id="item-folder">
     <canvas id="cv-folder" width="96" height="96" style="width:109px;height:109px;"></canvas>
     <span class="icon-label" data-i18n="home.folder">cartas(...)</span>
-  </div>
-  <div class="icon-item" id="item-box">
-    <canvas id="cv-box" width="96" height="96" style="width:87px;height:87px;"></canvas>
-    <span class="icon-label" data-i18n="home.box">escutar(...)</span>
   </div>
 </div>
 
@@ -1679,6 +1708,99 @@ const MUSIC_LINKS = {
   soundcloud: 'https://soundcloud.com/rafawada',      // atualizar
 };
 
+/* ════════════════════════════════════════════════════════
+   ÍCONES MINI — usados no header global (sempre visível)
+   CD: mesmo sprite do site, reduzido. IG: pixel art colorido.
+════════════════════════════════════════════════════════ */
+function drawMiniCD(c, hovered){
+  // reaproveita o drawBoombox (sprite CD bonito) — fica idêntico, só menor
+  drawBoombox(c, hovered);
+}
+
+function drawMiniInsta(c, hovered){
+  const ctx=c.getContext('2d'),W=c.width,s=W/96;
+  ctx.clearRect(0,0,W,W);
+  function p(x,y,col,w=1,h=1){if(w<=0||h<=0)return;ctx.fillStyle=col;ctx.fillRect(Math.round(x*s),Math.round(y*s),Math.round(w*s),Math.round(h*s));}
+  const BG='#080608';
+  ctx.fillStyle=BG;ctx.fillRect(0,0,W,W);
+
+  // paleta gradiente Instagram (canto inf esq → roxo/azul canto sup dir)
+  const C = {
+    yellow:'#fdc842', orange:'#f56040', pink:'#e1306c',
+    purple:'#833ab4', blue:'#4f5bd5', white:'#ffffff',
+  };
+
+  // quadrado arredondado: 12..84 (72w × 72h), cantos cortados em 10
+  const x0=12, y0=12, sz=72;
+
+  function gradColor(px, py){
+    const nx = (px - x0) / sz;
+    const ny = (py - y0) / sz;
+    const d = (nx + (1-ny)) / 2;
+    const distBL = Math.sqrt(nx*nx + (1-ny)*(1-ny));
+    if(distBL < 0.25) return C.yellow;
+    if(distBL < 0.5)  return C.orange;
+    if(d < 0.5)       return C.pink;
+    if(d < 0.75)      return C.purple;
+    return C.blue;
+  }
+
+  function inRoundedSquare(px, py){
+    if(px < x0 || px >= x0+sz || py < y0 || py >= y0+sz) return false;
+    const cn = 10;
+    if(px < x0+cn && py < y0+cn){
+      const dx = (x0+cn) - px, dy = (y0+cn) - py;
+      return dx*dx + dy*dy <= cn*cn;
+    }
+    if(px >= x0+sz-cn && py < y0+cn){
+      const dx = px - (x0+sz-cn-1), dy = (y0+cn) - py;
+      return dx*dx + dy*dy <= cn*cn;
+    }
+    if(px < x0+cn && py >= y0+sz-cn){
+      const dx = (x0+cn) - px, dy = py - (y0+sz-cn-1);
+      return dx*dx + dy*dy <= cn*cn;
+    }
+    if(px >= x0+sz-cn && py >= y0+sz-cn){
+      const dx = px - (x0+sz-cn-1), dy = py - (y0+sz-cn-1);
+      return dx*dx + dy*dy <= cn*cn;
+    }
+    return true;
+  }
+
+  // fundo gradiente
+  for(let py=y0; py<y0+sz; py++){
+    for(let px=x0; px<x0+sz; px++){
+      if(inRoundedSquare(px, py)){
+        p(px, py, gradColor(px, py));
+      }
+    }
+  }
+
+  // aro externo branco da câmera
+  const cx=48, cy=48;
+  for(let py=-18; py<=18; py++){
+    const hw=Math.round(Math.sqrt(18*18-py*py));
+    for(let px=-hw; px<=hw; px++){
+      const d=Math.sqrt(px*px+py*py);
+      if(d>=14 && d<=18) p(cx+px, cy+py, C.white);
+    }
+  }
+  // lente central
+  for(let py=-8; py<=8; py++){
+    const hw=Math.round(Math.sqrt(8*8-py*py));
+    for(let px=-hw; px<=hw; px++){
+      const d=Math.sqrt(px*px+py*py);
+      if(d>=6 && d<=8) p(cx+px, cy+py, C.white);
+    }
+  }
+  // flash no canto sup. dir.
+  p(cx+10, cy-12, C.white, 3, 3);
+  p(cx+11, cy-13, C.white, 1, 1);
+  p(cx+13, cy-13, C.white, 1, 1);
+  p(cx+11, cy-11, C.white, 1, 1);
+  p(cx+13, cy-11, C.white, 1, 1);
+}
+
 function drawSpotify(c){
   const ctx=c.getContext('2d'),W=c.width,s=W/96;
   ctx.clearRect(0,0,W,W);
@@ -2179,30 +2301,17 @@ function runExplosionAnimation(onDone){
    NAVEGAÇÃO — ESCUTAR
 ════════════════════════════════════════════════════════ */
 const pageEscutar = document.getElementById('page-escutar');
+let lastEscutarFrom = null; // pra saber se voltar pra home ou pra senha
 
 function goToEscutar(){
-  pageHome.style.pointerEvents = 'none';
+  // detecta de onde vem (tela atual visível) e lembra pro retorno
+  const fromPassword = !pagePassword.classList.contains('hidden');
+  const fromPage = fromPassword ? pagePassword : pageHome;
+  lastEscutarFrom = fromPage;
 
-  const sprite = document.getElementById('item-sprite');
-  const folder = document.getElementById('item-folder');
-  const box    = document.getElementById('item-box');
-
-  const fadeDur = 350;
-  let start = null;
-
-  function fadeFrame(ts){
-    if(!start) start = ts;
-    const t = Math.min((ts - start) / fadeDur, 1);
-    sprite.style.opacity = 1 - t;
-    folder.style.opacity = 1 - t;
-
-    if(t < 1){
-      requestAnimationFrame(fadeFrame);
-    } else {
-      pageHome.classList.add('hidden');
-      pageHome.style.pointerEvents = '';
-      sprite.style.opacity = '';
-      folder.style.opacity = '';
+  glitchTransition(
+    ()=>{
+      fromPage.classList.add('hidden');
 
       // desenha os ícones reais (ficarão escondidos até o fim da explosão)
       drawSpotify(document.getElementById('cv-spotify'));
@@ -2215,10 +2324,11 @@ function goToEscutar(){
       icons.style.pointerEvents = 'none';
 
       pageEscutar.classList.remove('hidden');
+      document.body.classList.add('in-escutar');
       setTimeout(() => runExplosionAnimation(() => {}), 80);
-    }
-  }
-  requestAnimationFrame(fadeFrame);
+    },
+    ()=>{}
+  );
 }
 /* ════════════════════════════════════════════════════════
    LÁGRIMAS ANIMADAS — canvas separado (tear-overlay)
@@ -2659,7 +2769,6 @@ function goToCartas(){
   pageHome.style.pointerEvents = 'none';
 
   const sprite = document.getElementById('item-sprite');
-  const box    = document.getElementById('item-box');
   const folder = document.getElementById('item-folder');
 
   const fadeDur = 350;
@@ -2669,7 +2778,7 @@ function goToCartas(){
     if(!start) start = ts;
     const t = Math.min((ts - start) / fadeDur, 1);
     sprite.style.opacity = 1 - t;
-    box.style.opacity    = 1 - t;
+    folder.style.opacity = 1 - t;
 
     if(t < 1){
       requestAnimationFrame(fadeFrame);
@@ -2678,7 +2787,7 @@ function goToCartas(){
       pageHome.classList.add('hidden');
       pageHome.style.pointerEvents = '';
       sprite.style.opacity = '';
-      box.style.opacity    = '';
+      folder.style.opacity = '';
 
       pageCartas.classList.remove('hidden');
 
@@ -3718,13 +3827,18 @@ document.getElementById('nav-next').addEventListener('click', ()=>{
   }
 });
 
-// clique no boombox — vai pra escutar
-document.getElementById('item-box').addEventListener('click', goToEscutar);
+// clique no CD mini (tela de senha) — vai pra escutar
+document.getElementById('mini-cd').addEventListener('click', goToEscutar);
 
-// fechar — page-escutar
+// fechar — page-escutar (volta pra onde veio: home ou senha)
 document.getElementById('escutar-close').addEventListener('click', ()=>{
+  const target = lastEscutarFrom || pageHome;
   glitchTransition(
-    ()=>{ pageEscutar.classList.add('hidden'); pageHome.classList.remove('hidden'); },
+    ()=>{
+      pageEscutar.classList.add('hidden');
+      document.body.classList.remove('in-escutar');
+      target.classList.remove('hidden');
+    },
     ()=>{}
   );
 });
@@ -3735,18 +3849,24 @@ document.getElementById('item-youtube').addEventListener('click', ()=> window.op
 document.getElementById('item-apple').addEventListener('click',   ()=> window.open(MUSIC_LINKS.apple,   '_blank'));
 document.getElementById('item-soundcloud').addEventListener('click', ()=> window.open(MUSIC_LINKS.soundcloud, '_blank'));
 
-// hover nos ícones de música (home)
+// hover nos ícones da home
 document.getElementById('item-folder').addEventListener('mouseenter', ()=>drawFolder(document.getElementById('cv-folder'), true));
 document.getElementById('item-folder').addEventListener('mouseleave', ()=>drawFolder(document.getElementById('cv-folder'), false));
-document.getElementById('item-box').addEventListener('mouseenter', ()=>drawBoombox(document.getElementById('cv-box'), true));
-document.getElementById('item-box').addEventListener('mouseleave', ()=>drawBoombox(document.getElementById('cv-box'), false));
+
+// hover nos mini-icons da tela de senha (CD e Instagram)
+document.getElementById('mini-cd').addEventListener('mouseenter', ()=>drawMiniCD(document.getElementById('cv-mini-cd'), true));
+document.getElementById('mini-cd').addEventListener('mouseleave', ()=>drawMiniCD(document.getElementById('cv-mini-cd'), false));
+document.getElementById('mini-insta').addEventListener('mouseenter', ()=>drawMiniInsta(document.getElementById('cv-mini-insta'), true));
+document.getElementById('mini-insta').addEventListener('mouseleave', ()=>drawMiniInsta(document.getElementById('cv-mini-insta'), false));
 
 /* ════════════════════════════════════════════════════════
    INIT
 ════════════════════════════════════════════════════════ */
 drawSprite(document.getElementById('cv-sprite'));
 drawFolder(document.getElementById('cv-folder'), false);
-drawBoombox(document.getElementById('cv-box'), false);
+// mini-icons da tela de senha
+drawMiniCD(document.getElementById('cv-mini-cd'), false);
+drawMiniInsta(document.getElementById('cv-mini-insta'), false);
 // pré-renderiza os ícones de música (ficam escondidos até a explosão)
 drawSpotify(document.getElementById('cv-spotify'));
 drawYoutube(document.getElementById('cv-youtube'));
