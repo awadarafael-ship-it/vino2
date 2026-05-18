@@ -145,6 +145,12 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
     top:30%;
     animation:none !important;
   }
+  /* mobile: hints-btn some quando dicas abertas (espaço apertado);
+     usuário usa "voltar" ou clica fora pra sair */
+  #page-password.hints-open #hints-btn{
+    opacity:0;
+    pointer-events:none;
+  }
 }
 
 /* ── MOBILE: vino(...) um pouco menor pra caber em telas estreitas ── */
@@ -167,8 +173,6 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
   z-index:6; /* acima de tudo: estátua frontal (3), painel (4), pw-ui (5) */
 }
 #hints-btn:hover{color:#c0a888;border-color:#8a7888;background:#1a1418;}
-#hints-btn.disabled{opacity:0.4;cursor:default;}
-#hints-btn.disabled:hover{color:#a89878;border-color:#504858;background:#100e10;}
 
 /* UI de senha */
 .pw-ui{
@@ -641,14 +645,46 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
   align-self:flex-start;
 }
 
-/* botão back genérico */
-.pg-back{
-  position:absolute;top:28px;left:32px;
-  background:transparent;border:none;cursor:pointer;
-  font-family:monospace;font-size:11px;letter-spacing:0.18em;
-  color:#504858;transition:color 0.2s;z-index:10;
+/* nav-bar das dicas — só visível quando hints estão abertas */
+#hints-navbar{
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.3s;
 }
-.pg-back:hover{color:#8a7888;}
+#page-password.hints-open #hints-navbar{
+  opacity:1;
+  pointer-events:auto;
+}
+
+/* ── NAV PADRONIZADA: voltar (← 1 nível) + início (raiz) ──
+   caixas estilo enter, escala menor pra não competir com conteúdo */
+.nav-bar{
+  position:absolute;top:24px;left:32px;
+  display:flex;gap:10px;z-index:10;
+}
+.nav-bar.right{left:auto;right:32px;}
+
+.nav-btn{
+  background:#100e10;
+  border:1px solid #504858;
+  cursor:pointer;
+  font-family:monospace;font-size:11px;letter-spacing:0.18em;
+  color:#8a7888;text-transform:lowercase;
+  font-weight:bold;
+  transition:color 0.2s, border-color 0.2s, background 0.2s, transform 0.1s;
+  padding:6px 14px;
+  border-radius:2px;
+  box-shadow:0 2px 0 0 #2a2030;
+}
+.nav-btn:hover{color:#c0a888;border-color:#8a7888;background:#1a1418;}
+.nav-btn:active{transform:translateY(1px);box-shadow:0 1px 0 0 #2a2030;}
+
+/* mobile: encolhe um pouco */
+@media (max-width:720px){
+  .nav-bar{top:18px;left:18px;gap:8px;}
+  .nav-bar.right{left:auto;right:18px;}
+  .nav-btn{font-size:10px;padding:5px 11px;letter-spacing:0.16em;}
+}
 
 </style>
 </head>
@@ -697,6 +733,11 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
   <!-- painel de dicas (lado direito da estátua, oculto por padrão) -->
   <div id="hints-panel"></div>
 
+  <!-- nav-bar das dicas: só aparece quando hints estão abertas -->
+  <div class="nav-bar" id="hints-navbar">
+    <button class="nav-btn" id="hints-back" data-i18n="nav.back">← voltar</button>
+  </div>
+
   <!-- botão dicas: posicionado no topo, fora do flex de pw-ui pra não conflitar -->
   <button id="hints-btn" data-i18n="password.hintsBtn">dicas</button>
 
@@ -712,7 +753,9 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
      PÁGINA — ESCUTAR (explosão do rádio → ícones de música)
 ══════════════════════════════════════ -->
 <div class="scene hidden" id="page-escutar">
-  <button class="pg-back" id="escutar-close" data-i18n="nav.back">← voltar</button>
+  <div class="nav-bar">
+    <button class="nav-btn" id="escutar-close" data-i18n="nav.home">início</button>
+  </div>
   <div class="music-icons" id="music-icons" style="opacity:0;pointer-events:none;">
     <div class="icon-item" id="item-spotify">
       <canvas id="cv-spotify" width="96" height="96" style="width:60px;height:60px;"></canvas>
@@ -737,7 +780,9 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
      PÁGINA 3 — CARTAS (split .doc / .mov)
 ══════════════════════════════════════ -->
 <div class="scene hidden" id="page-cartas">
-  <button class="pg-back" id="cartas-close" data-i18n="nav.back">← voltar</button>
+  <div class="nav-bar">
+    <button class="nav-btn" id="cartas-close" data-i18n="nav.home">início</button>
+  </div>
   <!-- os dois canvas do split aparecem aqui via JS -->
   <div class="cartas-icons" id="cartas-icons" style="opacity:0;pointer-events:none;">
     <div class="icon-item" id="item-doc">
@@ -755,7 +800,10 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
      PÁGINA 4 — SUBPASTAS (lista de pastas com título)
 ══════════════════════════════════════ -->
 <div class="scene hidden" id="page-subfolders">
-  <button class="pg-back" id="subfolders-back" data-i18n="nav.back">← voltar</button>
+  <div class="nav-bar">
+    <button class="nav-btn" id="subfolders-back" data-i18n="nav.back">← voltar</button>
+    <button class="nav-btn" id="subfolders-home" data-i18n="nav.home">início</button>
+  </div>
   <div class="subfolders-grid" id="subfolders-grid"></div>
 </div>
 
@@ -763,7 +811,10 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
      PÁGINA 5 — CONTEÚDO (PDF ou vídeo)
 ══════════════════════════════════════ -->
 <div class="scene hidden" id="page-content">
-  <button class="pg-back" id="content-back" data-i18n="nav.back">← voltar</button>
+  <div class="nav-bar">
+    <button class="nav-btn" id="content-back" data-i18n="nav.back">← voltar</button>
+    <button class="nav-btn" id="content-home" data-i18n="nav.home">início</button>
+  </div>
   <div class="content-inner" id="content-inner">
     <span class="content-title" id="content-title"></span>
     <div id="content-media"></div>
@@ -779,7 +830,9 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
      PÁGINA — PLAYER (Vino album)
 ══════════════════════════════════════ -->
 <div class="scene hidden" id="page-player">
-  <button class="pg-back" id="player-close" data-i18n="nav.back">← voltar</button>
+  <div class="nav-bar">
+    <button class="nav-btn" id="player-close" data-i18n="nav.home">início</button>
+  </div>
 
   <div id="player-inner">
     <!-- título do álbum, clicável, abre modal de tracklist -->
@@ -872,10 +925,12 @@ const I18N = {
     'home.box':          'escutar(...)',
     'password.placeholder': 'senha',
     'password.hintsBtn': 'dicas',
+    'password.closeHints': 'voltar',
     'password.hint1':    '1 - bebida alcoólica derivada da uva',
     'password.hint2':    '2 - língua também conhecida como castellano',
     'password.hint3':    '3 - pqp.. como fala bebida alcoólica derivada da uva em espanhol?',
     'nav.back':          '← voltar',
+    'nav.home':          'início',
     'content.prev':      '(carta anterior)',
     'content.next':      '(próxima carta)',
     'content.empty':     'em breve(...)',
@@ -890,10 +945,12 @@ const I18N = {
     'home.box':          'listen(...)',
     'password.placeholder': 'password',
     'password.hintsBtn': 'hints',
+    'password.closeHints': 'back',
     'password.hint1':    '1 - alcoholic beverage made from grapes',
     'password.hint2':    '2 - language also known as castellano',
     'password.hint3':    '3 - jfc.. how do you say grape booze in spanish?',
     'nav.back':          '← back',
+    'nav.home':          'home',
     'content.prev':      '(previous letter)',
     'content.next':      '(next letter)',
     'content.empty':     'soon(...)',
@@ -2332,8 +2389,8 @@ function goToHome(){
       pagePassword.classList.add('hidden');
       pageHome.classList.remove('hidden');
       document.getElementById('pw-input').value='';
-      // reseta estado de dicas pro caso de voltar pra senha
-      hideHints();
+      // reset completo do estado de dicas — sessão terminou
+      resetHints();
     },
     ()=>{}
   );
@@ -2361,33 +2418,54 @@ function refreshHintsPanel(){
   }
 }
 
+// atualiza o texto do botão: "voltar" só quando viu as 3 E o overlay tá aberto
+function updateHintsBtnText(){
+  const btn=document.getElementById('hints-btn');
+  const panel=document.getElementById('hints-panel');
+  const overlayOpen=panel && panel.classList.contains('visible');
+  if(hintsShown>=3 && overlayOpen){
+    btn.textContent=t('password.closeHints');
+    btn.setAttribute('data-i18n','password.closeHints');
+  } else {
+    btn.textContent=t('password.hintsBtn');
+    btn.setAttribute('data-i18n','password.hintsBtn');
+  }
+}
+
 function showNextHint(){
-  if(hintsShown>=3) return; // sem efeito após 3
-  hintsShown++;
+  const panel=document.getElementById('hints-panel');
+  const isOpen=panel.classList.contains('visible');
 
-  // desenha estátua frontal com N dedos
-  drawFrontSprite(frontSprite, hintsShown);
-  frontSprite.classList.add('visible');
-
-  // marca a página em modo "dicas abertas" (CSS mobile usa isso)
-  pagePassword.classList.add('hints-open');
-
-  // atualiza painel
-  refreshHintsPanel();
-  document.getElementById('hints-panel').classList.add('visible');
-
-  // botão fica "desabilitado" visualmente após a 3a
-  if(hintsShown>=3){
-    document.getElementById('hints-btn').classList.add('disabled');
+  // CASO 1: dicas estão fechadas mas já existem dicas vistas → reabre no estado atual
+  if(!isOpen && hintsShown>0){
+    drawFrontSprite(frontSprite, hintsShown);
+    frontSprite.classList.add('visible');
+    pagePassword.classList.add('hints-open');
+    refreshHintsPanel();
+    panel.classList.add('visible');
+    updateHintsBtnText();
+    return;
   }
 
-  // input bloqueado enquanto dicas estão à mostra
-  document.getElementById('pw-input').blur();
-  document.getElementById('pw-input').disabled=true;
+  // CASO 2: já viu todas e clica de novo → fecha
+  if(hintsShown>=3){
+    hideHints();
+    return;
+  }
+
+  // CASO 3: incrementa pra próxima dica
+  hintsShown++;
+  drawFrontSprite(frontSprite, hintsShown);
+  frontSprite.classList.add('visible');
+  pagePassword.classList.add('hints-open');
+  refreshHintsPanel();
+  panel.classList.add('visible');
+  updateHintsBtnText();
 }
 
 function hideHints(){
-  // volta estátua pro fundo, limpa painel, reseta contador
+  // volta estátua pro fundo, limpa painel — NÃO reseta o contador
+  // (o usuário pode reabrir, mas só vai além das dicas já vistas)
   frontSprite.classList.remove('visible');
   pagePassword.classList.remove('hints-open');
   const ctx=frontSprite.getContext('2d');
@@ -2397,9 +2475,16 @@ function hideHints(){
   panel.classList.remove('visible');
   panel.innerHTML='';
 
+  // hintsShown NÃO reseta — preserva quantas dicas o usuário já viu
+  updateHintsBtnText();
+}
+
+/* reset completo do contador de dicas — usado quando volta pra senha
+   após entrar na home, pra dar uma chance limpa em nova sessão */
+function resetHints(){
   hintsShown=0;
-  document.getElementById('hints-btn').classList.remove('disabled');
-  document.getElementById('pw-input').disabled=false;
+  hideHints();
+  updateHintsBtnText();
 }
 
 /* ════════════════════════════════════════════════════════
@@ -3032,12 +3117,30 @@ audio.addEventListener('ended', ()=>{
   updateProgress();
 });
 
+// trigger unificado: abre tracklist se não está aberta + começa a tocar se não está tocando.
+// Se a tracklist já está aberta E já está tocando → pausa (sem fechar tracklist).
+// Se a tracklist já está aberta E está pausado → retoma.
+function triggerPlayer(){
+  const overlay=document.getElementById('tracklist-overlay');
+  const tracklistOpen=!overlay.classList.contains('hidden');
+
+  if(!tracklistOpen){
+    // 1º clique: abre tracklist + começa a tocar (se não estava)
+    overlay.classList.remove('hidden');
+    refreshTracklistPlayingState();
+    if(!isPlaying) togglePlay();
+  } else {
+    // tracklist já aberta: clicar na estátua/play só toggle play/pause
+    togglePlay();
+  }
+}
+
 // estátua clicável
-document.getElementById('player-sprite-wrap').addEventListener('click', togglePlay);
+document.getElementById('player-sprite-wrap').addEventListener('click', triggerPlayer);
 // botão play/pause na barra
 document.getElementById('player-play-btn').addEventListener('click', (e)=>{
   e.stopPropagation();
-  togglePlay();
+  triggerPlayer();
 });
 
 // popup queridos amigos: handler do #player-friends é vinculado dinamicamente
@@ -3051,11 +3154,18 @@ document.getElementById('friends-overlay').addEventListener('click', (e)=>{
     document.getElementById('friends-overlay').classList.add('hidden');
 });
 
-// modal tracklist: abrir clicando no título "Vino(...)"
+// título "Vino(...)" clicável: se tracklist fechada, abre+toca (igual estátua);
+// se tracklist aberta, fecha (sem mexer no audio)
 document.getElementById('player-title').addEventListener('click', (e)=>{
   e.stopPropagation();
-  document.getElementById('tracklist-overlay').classList.remove('hidden');
-  refreshTracklistPlayingState();
+  const overlay=document.getElementById('tracklist-overlay');
+  if(overlay.classList.contains('hidden')){
+    // tracklist fechada → mesmo comportamento da estátua
+    triggerPlayer();
+  } else {
+    // tracklist aberta → fecha, sem interferir no audio
+    overlay.classList.add('hidden');
+  }
 });
 // botão voltar do modal — fecha
 document.getElementById('tracklist-back').addEventListener('click', ()=>{
@@ -3491,8 +3601,11 @@ document.getElementById('pw-input').addEventListener('keydown', e=>{
   if(e.key==='Enter') checkPassword();
 });
 
-// botão dicas — incrementa hint
+// botão dicas — incrementa hint (ou fecha quando já atingiu o último)
 document.getElementById('hints-btn').addEventListener('click', showNextHint);
+
+// botão voltar das dicas — fecha o overlay de dicas
+document.getElementById('hints-back').addEventListener('click', hideHints);
 
 // clicar na estátua frontal volta pro estado faded
 frontSprite.addEventListener('click', hideHints);
@@ -3505,6 +3618,7 @@ pagePassword.addEventListener('click', (e)=>{
   if(t.closest('#hints-panel')) return;
   if(t.closest('.pw-ui')) return;
   if(t.closest('#hints-btn')) return;
+  if(t.closest('#hints-navbar')) return;
   if(t===frontSprite) return; // já tem handler próprio
   hideHints();
 });
@@ -3546,6 +3660,26 @@ document.getElementById('content-back').addEventListener('click', ()=>{
     ()=>{}
   );
 });
+
+// botão "início" — fecha tudo e volta pra home (qualquer página)
+function goHome(){
+  glitchTransition(
+    ()=>{
+      // esconde todas as cenas
+      pageCartas.classList.add('hidden');
+      pageSubfolders.classList.add('hidden');
+      pageContent.classList.add('hidden');
+      // garante que a home volta visível
+      pageHome.classList.remove('hidden');
+      // restaura icons da page-cartas pro caso de voltar lá depois
+      const ci=document.getElementById('cartas-icons');
+      if(ci){ ci.style.opacity='1'; ci.style.pointerEvents='auto'; }
+    },
+    ()=>{}
+  );
+}
+document.getElementById('subfolders-home').addEventListener('click', goHome);
+document.getElementById('content-home').addEventListener('click', goHome);
 
 // lightbox de foto: fechar, navegar, tecla esc
 document.getElementById('foto-lightbox-close').addEventListener('click', closeFotoLightbox);
