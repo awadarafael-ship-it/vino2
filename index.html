@@ -281,6 +281,27 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
 }
 #pw-input:focus{border-color:#8a7888;}
 #pw-input.shake{animation:shake 0.45s ease;}
+
+/* garrafinha de progresso da senha */
+#pw-bottle{
+  position:absolute;
+  left:calc(100% + 10px);
+  top:50%;
+  transform:translateY(-50%);
+  width:29px;
+  height:78px;
+  image-rendering:pixelated;
+  image-rendering:crisp-edges;
+  pointer-events:none;
+}
+@media (max-width:720px){
+  /* mobile: garrafa um pouco menor pra não competir com o input */
+  #pw-bottle{
+    width:24px;
+    height:64px;
+    left:calc(100% + 8px);
+  }
+}
 @keyframes shake{
   0%,100%{transform:translateX(0);}
   20%{transform:translateX(-6px);}
@@ -825,6 +846,8 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;transition:transfor
   <div class="pw-ui">
     <div class="pw-input-wrap">
       <input id="pw-input" type="password" data-i18n-placeholder="password.placeholder" placeholder="senha" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <!-- garrafinha de progresso (enche conforme acerta letras) -->
+      <canvas id="pw-bottle" width="17" height="46"></canvas>
     </div>
     <button id="pw-btn">(...)</button>
   </div>
@@ -3786,17 +3809,237 @@ function animateTears(){
 ════════════════════════════════════════════════════════ */
 const PASSWORD='vino'; // ← troque aqui
 
+/* ── GARRAFINHA DE PROGRESSO ──
+   canvas 17x46. garrafa ocupa y=7..44 (offset Y_OFF=6 pra deixar 6px acima livres pra rolha voadora).
+   corpo do vinho ocupa de y=20 (topo) até y=43 (base) = 23px de range.
+   rótulo creme fixo em y=28..33. */
+const bottleCanvas=document.getElementById('pw-bottle');
+const bottleCtx=bottleCanvas?bottleCanvas.getContext('2d'):null;
+const Y_OFF=6; // deslocamento vertical de todo o desenho da garrafa
+let currentFillPct=0;
+let targetFillPct=0;
+let corkLaunched=false; // true depois que a rolha saiu voando
+let corkEl=null; // div DOM da rolha em voo
+
+function px(x,y,w,h,color){
+  bottleCtx.fillStyle=color;
+  bottleCtx.fillRect(x,y,w,h);
+}
+
+function drawWineBottle(fillPct){
+  if(!bottleCtx) return;
+  fillPct=Math.max(0,Math.min(1,fillPct));
+  bottleCtx.clearRect(0,0,17,46);
+
+  const Y=Y_OFF;
+
+  // ── contorno do corpo (laterais) ──
+  px(3,13+Y,1,25,'#1a0e18');
+  px(13,13+Y,1,25,'#1a0e18');
+  // fundo
+  px(3,38+Y,11,1,'#1a0e18');
+  // ombro (stair-step, só bordas — deixa interior livre pro vinho)
+  // y=12: bordas em x=4 e x=12
+  px(4,12+Y,1,1,'#1a0e18');
+  px(12,12+Y,1,1,'#1a0e18');
+  // y=11: bordas em x=5 e x=11
+  px(5,11+Y,1,1,'#1a0e18');
+  px(11,11+Y,1,1,'#1a0e18');
+  // y=10: bordas em x=6 e x=10 (já casa com a parede do gargalo)
+  px(6,10+Y,1,1,'#1a0e18');
+  px(10,10+Y,1,1,'#1a0e18');
+  // gargalo (laterais)
+  px(6,3+Y,1,7,'#1a0e18');
+  px(10,3+Y,1,7,'#1a0e18');
+
+  // ── rolha (só desenha no canvas se não foi lançada como DOM) ──
+  if(!corkLaunched){
+    px(6,1+Y,5,2,'#3a2818');
+    px(6,3+Y,5,1,'#2a1810');
+  }
+
+  // ── lábio da boca (aro preto no topo, aparece após o pop) ──
+  if(corkLaunched){
+    px(6,2+Y,5,1,'#1a0e18');
+  }
+
+  // ── vinho ──
+  // corpo: interior é y=14..37 (24px). maxH=24 pra preencher tudo.
+  const maxH=24;
+  const h=Math.round(fillPct*maxH);
+  if(h>0){
+    const yTop=38+Y-h;
+    px(4,yTop,9,h,'#5a0a18');
+    // menisco no topo (só se rolha ainda não saiu)
+    if(!corkLaunched){
+      px(4,yTop,9,1,'#a82838');
+    }
+    // transbordando: enche ombro + gargalo (interior das stair-steps)
+    if(fillPct>=0.95){
+      // ombro: interior aumenta de fora pra dentro
+      px(5,12+Y,7,1,'#5a0a18'); // y=12, x=5..11
+      px(6,11+Y,5,1,'#5a0a18'); // y=11, x=6..10
+      px(7,10+Y,3,1,'#5a0a18'); // y=10, x=7..9
+      // gargalo
+      px(7,4+Y,3,6,'#5a0a18'); // y=4..9
+      // chega até a boca se rolha saiu
+      if(corkLaunched){
+        px(7,3+Y,3,1,'#5a0a18');
+      }
+    }
+  }
+
+  // ── rótulo creme ──
+  px(3,22+Y,11,6,'#d8c8b0');
+  px(3,22+Y,11,1,'#a89878');
+  px(3,27+Y,11,1,'#a89878');
+
+  // ── highlight (reflexo) ──
+  const yTopFill=h>0?(38+Y-h):(38+Y);
+  if(yTopFill>14+Y){
+    const reflexEnd=Math.min(yTopFill,22+Y);
+    px(4,14+Y,1,reflexEnd-(14+Y),'#504858');
+  }
+  if(fillPct<0.95){
+    px(6,4+Y,1,6,'#504858');
+  }
+}
+
+/* prefixo case-insensitive correto */
+function getCorrectPrefix(typed){
+  const lower=(typed||'').trim().toLowerCase();
+  let count=0;
+  for(let i=0;i<lower.length && i<PASSWORD.length;i++){
+    if(lower[i]===PASSWORD[i]) count++;
+    else break;
+  }
+  return count;
+}
+
+/* lança a rolha como um elemento DOM separado pra ela poder subir a tela inteira */
+function launchCork(){
+  if(corkLaunched) return;
+  corkLaunched=true;
+
+  // posição atual da boca da garrafa em coords de viewport
+  const rect=bottleCanvas.getBoundingClientRect();
+  // a rolha está em y=1..3 do sprite (3px de altura) e x=6..10 (5px wide).
+  // sprite tem 17px wide e é renderizado em 29px (ou 24px no mobile).
+  // sprite tem 46px tall e é renderizado em 78px (ou 64px no mobile).
+  const scale=rect.width/17;
+  const corkW=5*scale;
+  const corkH=3*scale;
+  const corkX=rect.left + 6*scale;
+  // y da rolha no sprite é (1+Y_OFF)=7, então no viewport:
+  const corkY=rect.top + 7*scale;
+
+  // cria a div com a rolha desenhada via background-color pixelado
+  const el=document.createElement('canvas');
+  el.width=5;
+  el.height=3;
+  const ec=el.getContext('2d');
+  ec.fillStyle='#3a2818';
+  ec.fillRect(0,0,5,2);
+  ec.fillStyle='#2a1810';
+  ec.fillRect(0,2,5,1);
+
+  el.style.cssText=`
+    position:fixed;
+    left:${corkX}px;
+    top:${corkY}px;
+    width:${corkW}px;
+    height:${corkH}px;
+    image-rendering:pixelated;
+    pointer-events:none;
+    z-index:9999;
+    transition:transform 900ms cubic-bezier(0.4,0,0.6,0.4);
+    will-change:transform;
+  `;
+  document.body.appendChild(el);
+  corkEl=el;
+
+  // dispara o voo no próximo frame (pra animação pegar)
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      // sobe a tela inteira (do ponto atual até bem acima do topo)
+      const distance=corkY + 100; // distância pra sair totalmente
+      el.style.transform=`translateY(-${distance}px)`;
+    });
+  });
+
+  // limpa depois que a animação termina
+  setTimeout(()=>{
+    if(corkEl===el){
+      el.remove();
+      corkEl=null;
+    }
+  }, 1100);
+
+  // redesenha a garrafa sem rolha (com lábio aparente)
+  drawWineBottle(currentFillPct);
+}
+
+/* reseta a rolha (caso a senha seja apagada/errada) */
+function resetCork(){
+  if(!corkLaunched) return;
+  corkLaunched=false;
+  if(corkEl){
+    corkEl.remove();
+    corkEl=null;
+  }
+  drawWineBottle(currentFillPct);
+}
+
+/* loop de animação (interpola currentFillPct → targetFillPct) */
+function animateBottle(){
+  const delta=targetFillPct-currentFillPct;
+  let needsRedraw=false;
+
+  if(Math.abs(delta)>0.002){
+    currentFillPct+=delta*0.18;
+    needsRedraw=true;
+  } else if(currentFillPct!==targetFillPct){
+    currentFillPct=targetFillPct;
+    needsRedraw=true;
+  }
+
+  // dispara o pop quando enche
+  if(currentFillPct>=0.99 && !corkLaunched){
+    launchCork();
+  }
+  // reseta se baixou (apagou letras ou erro)
+  if(targetFillPct<0.99 && corkLaunched){
+    resetCork();
+  }
+
+  if(needsRedraw) drawWineBottle(currentFillPct);
+  requestAnimationFrame(animateBottle);
+}
+
+/* listener: a cada input, recalcula prefixo correto e ajusta target */
+if(document.getElementById('pw-input')){
+  document.getElementById('pw-input').addEventListener('input',(e)=>{
+    const correctChars=getCorrectPrefix(e.target.value);
+    targetFillPct=correctChars/PASSWORD.length;
+  });
+}
+
+// kick off
+drawWineBottle(0);
+animateBottle();
+
 function checkPassword(){
   const val=document.getElementById('pw-input').value.trim().toLowerCase();
   if(val===PASSWORD){
     goToHome();
   } else {
-    // senha errada → shake + lágrimas
+    // senha errada → shake + lágrimas + esvazia garrafa
     const inp=document.getElementById('pw-input');
     inp.classList.remove('shake');
     void inp.offsetWidth;
     inp.classList.add('shake');
     inp.value='';
+    targetFillPct=0;
     animateTears();
   }
 }
